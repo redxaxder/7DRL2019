@@ -1,0 +1,27 @@
+{
+  "name": "untitled",
+  "set": "psc-0.12.2",
+  "source": "https://github.com/purescript/package-sets.git",
+  "depends":
+    [ "prelude"
+    , "behaviors"
+    , "canvas"
+    , "console"
+    , "debug"
+    , "effect"
+    , "event"
+    , "foldable-traversable"
+    , "lazy"
+    , "newtype"
+    , "node-buffer"
+    , "partial"
+    , "prelude"
+    , "profunctor-lenses"
+    , "psci-support"
+    , "random"
+    , "rationals"
+    , "refs"
+    , "strings"
+    , "transformers"
+  ]
+}
