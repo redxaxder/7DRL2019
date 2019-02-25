@@ -6,8 +6,6 @@ module UserInterface
   )
   where
 
-import Extra.Prelude
-
 import Types (GameState)
 import Intent (Action (..))
 import Direction (Direction (..))
@@ -15,6 +13,9 @@ import Direction (Direction (..))
 
 type Key = String
 
+-- Monoid action on the renderer.
+-- Each constructor represents a function `Renderer -> Renderer`
+-- Use this to add an inventory overlay, for example.
 data UIRenderData = UIRenderData
 
 data UI = AwaitingInput UIRenderData (Key -> GameState -> UI) | GameAction Action UI
