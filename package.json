@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "pscid:build": "./build.sh"
+    "pscid:build": "make compile"
   }
 }
