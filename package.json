@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "pscid:build": "make compile"
+    "pscid:build": "make compile tags"
   }
 }
