@@ -1,7 +1,5 @@
 module Screen where
 
-import Extra.Prelude
-
 {-
 import Data.Map (Map)
 import Atlas (Position)
