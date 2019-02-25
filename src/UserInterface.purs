@@ -1,4 +1,10 @@
-module UserInterface where
+module UserInterface
+  ( uiInit
+  , UIRenderData (..)
+  , UI (..)
+  , Key
+  )
+  where
 
 import Extra.Prelude
 
@@ -13,11 +19,14 @@ data UIRenderData = UIRenderData
 
 data UI = AwaitingInput UIRenderData (Key -> GameState -> UI) | GameAction Action UI
 
-readyToMove :: UI
-readyToMove = AwaitingInput UIState move
+uiInit :: UI
+uiInit = move
+
+move :: UI
+move = AwaitingInput UIRenderData go
   where
-    move "ArrowLeft"  _ = GameAction (Move Left) readyToMove
-    move "ArrowRight" _ = GameAction (Move Right) readyToMove
-    move "ArrowDown"  _ = GameAction (Move Down) readyToMove
-    move "ArrowUp"    _ = GameAction (Move Up) readyToMove
-    move _ _            = readyToMove
+    go "ArrowLeft"  _ = GameAction (Move Left) move
+    go "ArrowRight" _ = GameAction (Move Right) move
+    go "ArrowDown"  _ = GameAction (Move Down) move
+    go "ArrowUp"    _ = GameAction (Move Up) move
+    go _ _            = move
