@@ -17,7 +17,7 @@ import Partial.Unsafe (unsafePartial)
 import Types (GameState)
 import Init (init)
 import Intent (Action (..), getAction)
-import UserInterface (uiInit, UI(..), Key)
+import UserInterface (Key, UI, uiInit)
 
 
 main :: Effect Unit

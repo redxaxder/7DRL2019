@@ -1,6 +1,5 @@
 module FOV where
 
-
 import Extra.Prelude
 
 import Data.Array (catMaybes, cons, nubBy, singleton, sortBy)
@@ -10,7 +9,6 @@ import Data.Foldable (any)
 import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Map as M
-import Data.Maybe (fromMaybe)
 import Direction (Direction(..), localMove)
 import Atlas (Atlas, LocalPosition, Position, getElement, move)
 import Tile (Tile, blocksVision)
@@ -197,7 +195,7 @@ absInt x | x >= 0 = x
          | otherwise = -x
 
 shift :: Atlas Tile -> Frontier QuadrantPosition -> Array (Frontier QuadrantPosition)
-shift atlas (Frontier{horz, vert, cells, shadows}) = finish (foldr f init 
+shift atlas (Frontier{horz, vert, cells, shadows}) = finish (foldr f init
   (sortBy (comparing (map absInt <<< toScreen)) cells))
   where
   _ = map toScreen cells
