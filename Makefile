@@ -27,6 +27,7 @@ output/Main/index.js: $(shell find src/ -type f)
 	@psc-package build
 
 target/game.js: output/Main/index.js
+	@ls output
 	@purs bundle output/*/{index,foreign}.js --module Main --main Main -o target/game.js
 
 target/index.html: html/index.html
