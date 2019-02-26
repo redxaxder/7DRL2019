@@ -2,8 +2,6 @@ module Tile where
 
 import Prelude
 
-import Direction (Direction)
-
 data Tile = Wall | Empty
 
 derive instance eqTile :: Eq Tile
