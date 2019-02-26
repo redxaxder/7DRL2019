@@ -1,45 +1,42 @@
-module UserInterface
-  ( uiInit
-  , UIRenderData (..)
-  , UI (..)
-  , Key
-  )
-  where
+module UserInterface where
 
 import Extra.Prelude
 
-import Types (GameState)
+import Types (GameState, UIRenderData (..))
 import Intent (Action (..))
 import Direction (Direction (..))
-
-
 
 -- Javascript key codes here: https://keycode.info/
 
 type Key = String
-data UIRenderData = UIRenderData
-data UI = AwaitingInput UIRenderData (Key -> GameState -> UI) | GameAction Action UI
 
-uiInit :: UI
-uiInit = move
+data UI = AwaitingInput UIAwaitingInput | GameAction UIAction
+type UIAwaitingInput = { uiRender :: UIRenderData, next :: Key -> UI }
+type UIAction = { uiAction :: Action, next :: GameState -> UI }
 
-showMove :: UIRenderData
-showMove = UIRenderData
+getGameAction :: UI -> Maybe UIAction
+getGameAction (AwaitingInput _) = Nothing
+getGameAction (GameAction a) = Just a
 
-move :: UI
-move = AwaitingInput showMove go
+getAwaitingInput :: UI -> Maybe UIAwaitingInput
+getAwaitingInput (AwaitingInput k) = Just k
+getAwaitingInput (GameAction _) = Nothing
+
+uiInit :: GameState -> UIAwaitingInput
+uiInit gs = { uiRender: StartScreen, next: const (move gs) }
+
+move :: GameState -> UI
+move gs = AwaitingInput { uiRender: MainGame, next }
   where
-    go "ArrowLeft"  _ = GameAction (Move Left) move
-    go "ArrowRight" _ = GameAction (Move Right) move
-    go "ArrowDown"  _ = GameAction (Move Down) move
-    go "ArrowUp"    _ = GameAction (Move Up) move
-    go "KeyI"       _ = inventory
-    go _            _ = move
+    next "ArrowLeft"  = GameAction { uiAction: (Move Left), next: move }
+    next "ArrowRight" = GameAction { uiAction: (Move Right), next: move }
+    next "ArrowDown"  = GameAction { uiAction: (Move Down), next: move }
+    next "ArrowUp"    = GameAction { uiAction: (Move Up), next: move }
+    next "KeyI"       = inventory gs
+    next _            = move gs
 
-showInventory :: UIRenderData
-showInventory = UIRenderData
-
-inventory :: UI
-inventory = AwaitingInput showInventory go
+inventory :: GameState -> UI
+inventory gs = AwaitingInput { uiRender: MainGame, next }
   where
-    go _ _ = todo
+    next "Escape" = move gs
+    next _ = inventory gs

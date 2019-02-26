@@ -5,16 +5,17 @@ import Extra.Prelude
 import Data.Array.NonEmpty as NE
 import Data.Map (toUnfoldable)
 import Data.String.CodeUnits (singleton)
-import Graphics.Canvas (Context2D, fillRect, fillText, setFillStyle)
+import Graphics.Canvas (Context2D, fillRect, fillText)
+import Graphics.Canvas (setFillStyle) as Canvas
 
 import Constants (canvasDimensions, tileDimensions)
 import FOV (scan)
 import Tile (Tile (..))
-import Types (GameState)
+import Types (GameState, UIRenderData (..))
 
 clear :: Context2D -> Effect Unit
 clear ctx = do
-  setFillStyle ctx "#000000"
+  setFillStyle ctx black
   fillRect ctx { x: 0.0, y: 0.0, width: canvasDimensions.width, height: canvasDimensions.height }
 
 newtype Color = Color String
@@ -26,13 +27,26 @@ black = Color "#000000"
 white :: Color
 white = Color "#FFFFFF"
 
+setFillStyle :: Context2D -> Color -> Effect Unit
+setFillStyle ctx (Color c) = Canvas.setFillStyle ctx c
+
 type Glyph = { char :: Char, fgcolor :: Color, bgcolor :: Color }
 
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
 
-draw :: Context2D -> GameState -> Effect Unit
-draw ctx gs = do
+draw :: Context2D -> UIRenderData -> GameState -> Effect Unit
+draw ctx StartScreen _ = drawStartScreen ctx
+draw ctx _ gs = drawMain ctx gs
+
+drawStartScreen :: Context2D -> Effect Unit
+drawStartScreen ctx = do
+  clear ctx
+  setFillStyle ctx white
+  fillText ctx "Press any key to start" 53.0 154.0
+
+drawMain :: Context2D -> GameState -> Effect Unit
+drawMain ctx gs = do
   clear ctx
   sequence_ $ flip map positions $ \(Tuple pos elements) ->
      drawGlyph ctx (getGlyph elements) pos
@@ -55,14 +69,14 @@ textOffset = { x: 3.0, y: 14.0 }
 
 drawGlyph :: Context2D -> Glyph -> Vector Int -> Effect Unit
 drawGlyph ctx t (V pos) = do
-  setFillStyle ctx (un Color t.bgcolor)
+  setFillStyle ctx t.bgcolor
   fillRect ctx
     { x: canvasx
     , y: canvasy
     , width: toNumber tileDimensions.width
     , height: toNumber tileDimensions.height
     }
-  setFillStyle ctx (un Color t.fgcolor)
+  setFillStyle ctx t.fgcolor
   fillText ctx (singleton t.char) (canvasx + textOffset.x) (canvasy + textOffset.y)
   where
   canvasx = toNumber $ (pos.x + 10) * tileDimensions.width

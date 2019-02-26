@@ -9,3 +9,5 @@ type GameState =
  , atlas :: Atlas Tile
  }
 
+
+data UIRenderData = MainGame | StartScreen
