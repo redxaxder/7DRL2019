@@ -1,5 +1,7 @@
 module UserInterface where
 
+import Extra.Prelude
+
 import Types (GameState, UIRenderData (..))
 import Intent (Action (..))
 import Direction (Direction (..))
