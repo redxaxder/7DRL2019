@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "pscid:build": "make build"
+    "pscid:build": "make clean build"
   }
 }
