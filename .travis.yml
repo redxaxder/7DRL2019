@@ -5,6 +5,7 @@ sudo: required
 cache:
   directories:
   - .psc-package
+  - output
 
 env:
   - PATH=$HOME/purescript:$HOME/psc-package:$PATH
