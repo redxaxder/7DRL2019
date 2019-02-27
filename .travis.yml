@@ -21,4 +21,4 @@ install:
   - chmod a+x $HOME/psc-package
 
 script:
-  - make package
+  - make clean package
