@@ -1,5 +1,8 @@
 module Types where
 
+import Extra.Prelude
+
+import Data.Map (Map)
 
 import Atlas (Atlas, Position)
 import Tile (Tile)
@@ -7,7 +10,11 @@ import Tile (Tile)
 type GameState =
  { player :: Position
  , atlas :: Atlas Tile
+ , inventory :: Map Char Item
  }
 
+data UIRenderData = MainGame
+  | StartScreen
+  | InventoryScreen (Maybe {label :: Char, item :: Item})
 
-data UIRenderData = MainGame | StartScreen
+type Item = { name :: String }

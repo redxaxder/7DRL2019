@@ -5,7 +5,7 @@ import Prelude
 import Extra.Math (Vector (..))
 
 
-data Direction = Up | Down | Left | Right
+data Direction = U | D | L | R
 
 derive instance eqDirection :: Eq Direction
 derive instance ordDirection :: Ord Direction
@@ -13,14 +13,14 @@ derive instance ordDirection :: Ord Direction
 rotate :: Int -> Direction -> Direction
 rotate n f = fromInt $ ((toInt f) + n) `mod` 4
   where
-  toInt Right = 0
-  toInt Up = 1
-  toInt Left = 2
-  toInt Down = 3
-  fromInt 0 = Right
-  fromInt 1 = Up
-  fromInt 2 = Left
-  fromInt _ = Down
+  toInt R = 0
+  toInt U = 1
+  toInt L = 2
+  toInt D = 3
+  fromInt 0 = R
+  fromInt 1 = U
+  fromInt 2 = L
+  fromInt _ = D
 
 clockwise :: Int
 clockwise = 3
@@ -33,9 +33,9 @@ opposite = rotate 2
 
 localMove :: Direction -> Vector Int -> Vector Int
 localMove dir (V p) = case dir of
-  Up    -> V p{ y = p.y - 1 }
-  Down  -> V p{ y = p.y + 1 }
-  Left  -> V p{ x = p.x - 1 }
-  Right -> V p{ x = p.x + 1 }
+  U -> V p{ y = p.y - 1 }
+  D -> V p{ y = p.y + 1 }
+  L -> V p{ x = p.x - 1 }
+  R -> V p{ x = p.x + 1 }
 
 

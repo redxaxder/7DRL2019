@@ -11,8 +11,6 @@ import Control.Monad.Maybe.Trans (runMaybeT, MaybeT (..))
 
 import Constants (tileDimensions, canvasDimensions, font)
 
--- import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasDimensions, setFont) -- todo move this out of main?
-
 getCanvasContext :: String -> Effect (Maybe Context2D)
 getCanvasContext path = runMaybeT do
   canvas <- MaybeT $ Canvas.getCanvasElementById "game"
@@ -26,8 +24,19 @@ loadImage path = makeAff \handler -> do
   Canvas.tryLoadImage path (handler <<< maybe (Left $ error "failed to load image") pure)
   mempty
 
-drawTile :: Context2D -> CanvasImageSource -> Sprite -> Vector Int -> Effect Unit
-drawTile ctx tileset (Sprite { offsetX, offsetY }) (V { x, y }) =
+drawSprite :: Context2D -> CanvasImageSource -> Sprite -> Vector Number -> Effect Unit
+drawSprite ctx tileset (Sprite { offsetX, offsetY }) (V { x, y }) =
+  let
+    { width, height } = tileDimensions
+    sourceX = toNumber (offsetX * width)
+    sourceY = toNumber (offsetY * height)
+    w = toNumber width
+    h = toNumber height
+  in
+  Canvas.drawImageFull ctx tileset sourceX sourceY w h x y w h
+
+drawSpriteToGrid :: Context2D -> CanvasImageSource -> Sprite -> Vector Int -> Effect Unit
+drawSpriteToGrid ctx tileset (Sprite { offsetX, offsetY }) (V { x, y }) =
   let
     { width, height } = tileDimensions
     sourceX = toNumber (offsetX * width)
@@ -41,23 +50,14 @@ drawTile ctx tileset (Sprite { offsetX, offsetY }) (V { x, y }) =
 
 newtype Sprite = Sprite { offsetX :: Int, offsetY :: Int }
 
-tile :: Int -> Int -> Sprite
-tile offsetX offsetY = Sprite { offsetX, offsetY }
+spriteAt :: Int -> Int -> Sprite
+spriteAt offsetX offsetY = Sprite { offsetX, offsetY }
 
 player :: Sprite
-player = todo
+player = spriteAt 2 0
 
-counter :: Sprite
-counter = todo
+wall :: Sprite
+wall = spriteAt 2 11
 
-stove :: Sprite
-stove = todo
-
-oven :: Sprite
-oven = todo
-
-kitchenWall :: Sprite
-kitchenWall = todo
-
-kitchenFloor :: Sprite
-kitchenFloor = todo
+floor :: Sprite
+floor = spriteAt 0 11

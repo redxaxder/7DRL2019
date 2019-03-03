@@ -2,23 +2,15 @@ module Init where
 
 import Extra.Prelude
 
+import Atlas (Atlas, Position(..), Chart, ChartId, mkAtlas, mkChart, addChart)
 import Control.Monad.State (evalState)
 import Control.Monad.State.Class (state, get)
-import Data.String.CodeUnits (toCharArray)
 import Data.Array (concat, mapWithIndex, catMaybes)
-
-import Atlas
-  ( Atlas
-  , Position(..)
-  , Chart
-  , ChartId
-  , mkAtlas
-  , mkChart
-  , addChart
-  )
-import Direction (Direction (..))
-import Types (GameState)
-import Tile (Tile (..))
+import Data.Map (Map, fromFoldable)
+import Data.String.CodeUnits (toCharArray)
+import Direction (Direction(..))
+import Tile (Tile(..))
+import Types (GameState, Item)
 
 
 init :: GameState
@@ -30,8 +22,16 @@ init = flip evalState defaultAtlas $ do
        , player: Position { chartId: chartB
                            , localPosition: V {x: 1,y: 1}
                            }
+       , inventory: exampleInventory
        }
 
+exampleInventory :: Map Char Item
+exampleInventory = fromFoldable
+  [ 'a' |> { name: "Apple" }
+  , 'b' |> { name: "Banapple" }
+  , 'c' |> { name: "Crabapple" }
+  , 'd' |> { name: "Dapple" }
+  ]
 
 partOne :: Array String
 partOne =
@@ -68,10 +68,10 @@ load rows atlas =
 
 charToTile :: Char -> Tuple (Maybe Direction) Tile
 charToTile '#' = Tuple Nothing Wall
-charToTile '^' = Tuple (Just Up) Empty
-charToTile 'v' = Tuple (Just Down) Empty
-charToTile '<' = Tuple (Just Left) Empty
-charToTile '>' = Tuple (Just Right) Empty
+charToTile '^' = Tuple (Just U) Empty
+charToTile 'v' = Tuple (Just D) Empty
+charToTile '<' = Tuple (Just L) Empty
+charToTile '>' = Tuple (Just R) Empty
 charToTile _ =   Tuple Nothing Empty
 
 defaultAtlas :: Atlas Tile

@@ -5,6 +5,7 @@ module Extra.Prelude
   , module Data.Maybe
   , module Data.Newtype
   , module Data.Traversable
+  , module Data.TraversableWithIndex
   , module Data.Tuple
   , module Data.Unfoldable
   , module Debug.Trace
@@ -27,9 +28,8 @@ module Extra.Prelude
   , unsafeFromJust
   ) where
 
-import Extra.Math (class Real, Vector(..), innerProduct, norm, toNumber, (**))
 import Prelude
-import Effect (Effect)
+
 import Data.Array (cons, groupBy, singleton, sortBy)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
@@ -40,13 +40,16 @@ import Data.Newtype (class Newtype, unwrap, un)
 import Data.Semigroup.Foldable (class Foldable1, foldMap1)
 import Data.Set (Set)
 import Data.Set as S
-import Data.Traversable (class Traversable, traverse_, sequence_, sequence)
+import Data.Traversable (class Traversable, traverse, traverse_, sequence_, sequence)
+import Data.TraversableWithIndex (traverseWithIndex)
+import Data.Tuple (Tuple(..))
 import Data.Unfoldable (unfoldr)
+import Debug.Trace (trace)
+import Effect (Effect)
+import Extra.Math (class Real, Vector(..), innerProduct, norm, toNumber, (**))
 import Partial (crash)
 import Partial.Unsafe (unsafePartial)
 import Prim.TypeError (class Warn, Text)
-import Data.Tuple (Tuple(..))
-import Debug.Trace (trace)
 
 
 infixr 0 Tuple as |>
