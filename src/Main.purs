@@ -10,8 +10,7 @@ import FRP.Event.Keyboard (down)
 
 import Atlas (getElement, move, updateAtlas)
 
-import Canvas (drawTile, loadImage, getCanvasContext)
-import Canvas as Tiles
+import Canvas (loadImage, getCanvasContext)
 import Draw (draw)
 import Init (init)
 import Intent (Action (..))
@@ -23,9 +22,8 @@ import UserInterface (uiInit, UI(..), Key, UIAwaitingInput)
 main :: Effect Unit
 main = unsafePartial $ launchAff_ $ do
   -- initialize canvas
-  Just ctx <- getCanvasContext "game" canvasDimensions font
+  Just ctx <- liftEffect $ getCanvasContext "game"
   cursesTileset <- loadImage "curses_square_16x16.bmp"
-  liftEffect $ setFont ctx font
   { event: engineState, push: pushEngineState } <- liftEffect create
   -- redraw screen in response to state changes
   cancelDraw <- liftEffect $ subscribe engineState $
