@@ -62,10 +62,10 @@ scanQuadrant
   -> Results
 scanQuadrant distance position atlas quadrant acc =
     let (Tuple horz vert) = case quadrant of
-          One   -> Right |> Up
-          Two   -> Left  |> Up
-          Three -> Left  |> Down
-          Four  -> Right |> Down
+          One   -> R |> U
+          Two   -> L |> U
+          Three -> L |> D
+          Four  -> R |> D
         center = QuadrantPosition { position, quadrant, xy: zero}
         frontier = Frontier { cells: [center], shadows: [], horz, vert }
      in scanHelper distance [frontier] atlas acc

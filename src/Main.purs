@@ -7,6 +7,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
+import Data.Map (delete)
 
 import Atlas (getElement, move, updateAtlas)
 
@@ -54,3 +55,7 @@ update gs (Move dir) =
    in if blocksMovement (getElement player atlas)
         then Nothing
         else Just $ gs { player = player, atlas = atlas }
+update gs (Drop itemChar) = 
+  let inventory = delete itemChar gs.inventory
+  in Just $ gs { inventory = inventory }
+
