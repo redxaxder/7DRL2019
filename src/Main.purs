@@ -2,35 +2,30 @@ module Main where
 
 import Extra.Prelude
 
-import Control.Monad.Rec.Class (tailRec, Step (..))
+import Control.Monad.Rec.Class (tailRec, Step(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Class.Console (log)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 
 import Atlas (getElement, move, updateAtlas)
-import Constants (canvasDimensions, font)
+
+import Canvas (drawTile, loadImage, getCanvasContext)
+import Canvas as Tiles
 import Draw (draw)
-import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasDimensions, setFont)
 import Init (init)
 import Intent (Action (..))
 import Partial.Unsafe (unsafePartial)
 import Tile (blocksMovement)
 import Types (GameState)
 import UserInterface (uiInit, UI(..), Key, UIAwaitingInput)
-import ResourceLoading (loadResources)
-
 
 main :: Effect Unit
 main = unsafePartial $ launchAff_ $ do
-  Just canvas <- liftEffect $ getCanvasElementById "game"
-  liftEffect $ setCanvasDimensions canvas canvasDimensions
-  ctx <- liftEffect $ getContext2D canvas
-  resourceList <- loadResources
-  case resourceList of
-       Nothing -> log "resource loading failed"
-       Just resources -> void $ sequence $ log <$> resources
+  -- initialize canvas
+  Just ctx <- getCanvasContext "game" canvasDimensions font
+  -- load tileset
+  cursesTileset <- loadImage "curses_square_16x16.bmp"
   liftEffect $ setFont ctx font
   { event: engineState, push: pushEngineState } <- liftEffect create
   -- redraw screen in response to state changes
