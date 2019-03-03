@@ -11,8 +11,8 @@ import Data.Map (delete)
 
 import Atlas (getElement, move, updateAtlas)
 
-import Canvas (loadImage, getCanvasContext)
-import Draw (draw)
+import Graphics.Canvas.Extra (initCanvas)
+import Graphics.Draw (draw)
 import Init (init)
 import Intent (Action (..))
 import Partial.Unsafe (unsafePartial)
@@ -23,8 +23,7 @@ import UserInterface (uiInit, UI(..), Key, UIAwaitingInput)
 main :: Effect Unit
 main = unsafePartial $ launchAff_ $ do
   -- initialize canvas
-  Just ctx <- liftEffect $ getCanvasContext "game"
-  cursesTileset <- loadImage "curses_square_16x16.bmp"
+  Just ctx <- initCanvas { canvasId: "game", spritesheetPath: "curses_square_16x16.bmp" }
   { event: engineState, push: pushEngineState } <- liftEffect create
   -- redraw screen in response to state changes
   cancelDraw <- liftEffect $ subscribe engineState $
@@ -55,7 +54,7 @@ update gs (Move dir) =
    in if blocksMovement (getElement player atlas)
         then Nothing
         else Just $ gs { player = player, atlas = atlas }
-update gs (Drop itemChar) = 
+update gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }
 
