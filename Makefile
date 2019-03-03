@@ -10,13 +10,13 @@ watch: ## Compile files on change with PSCID (useful for interactive development
 compile: output/Main/index.js ## Compile all project source files.
 
 .PHONY: package
-package: target/game.js target/index.html ## Package project build artifacts for distribution.
+package: target/game.js target/index.html target/curses_square_16x16.bmp ## Package project build artifacts for distribution.
 
 tags: output/Main/index.js ## Create machine-readable project documentation.
 	@psc-package sources | xargs purs docs --format ctags src/*.purs src/**/*.purs > tags
 
 .PHONY: build
-build: compile package tags ## Full project build.
+build: compile package ## Full project build (sans tags).
 
 .PHONY: clean
 clean: ## Remove all generated project files (keeps standard library).
@@ -31,3 +31,6 @@ target/game.js: output/Main/index.js
 
 target/index.html: html/index.html
 	@cp html/index.html target/index.html
+
+target/curses_square_16x16.bmp: data/curses_square_16x16.bmp
+	@cp data/curses_square_16x16.bmp target/curses_square_16x16.bmp

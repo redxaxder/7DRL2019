@@ -1,5 +1,6 @@
 module Extra.Prelude
   ( module Prelude
+  , module Data.Either
   , module Data.Foldable
   , module Data.Maybe
   , module Data.Newtype
@@ -31,6 +32,7 @@ import Prelude
 import Effect (Effect)
 import Data.Array (cons, groupBy, singleton, sortBy)
 import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Either (Either(..))
 import Data.Foldable (class Foldable, null, length, foldr, foldl, sum)
 import Data.Map (Map, alter, empty)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)

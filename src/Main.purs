@@ -2,14 +2,16 @@ module Main where
 
 import Extra.Prelude
 
-import Control.Monad.Rec.Class (tailRec, Step (..))
+import Control.Monad.Rec.Class (tailRec, Step(..))
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 
 import Atlas (getElement, move, updateAtlas)
-import Constants (canvasDimensions, font)
+
+import Canvas (loadImage, getCanvasContext)
 import Draw (draw)
-import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasDimensions, setFont)
 import Init (init)
 import Intent (Action (..))
 import Partial.Unsafe (unsafePartial)
@@ -17,20 +19,19 @@ import Tile (blocksMovement)
 import Types (GameState)
 import UserInterface (uiInit, UI(..), Key, UIAwaitingInput)
 
-
 main :: Effect Unit
-main = unsafePartial $ do
-  Just canvas <- getCanvasElementById "game"
-  setCanvasDimensions canvas canvasDimensions
-  ctx <- getContext2D canvas
-  setFont ctx font
-  --draw ctx init
-  { event: engineState, push: pushEngineState } <- create
+main = unsafePartial $ launchAff_ $ do
+  -- initialize canvas
+  Just ctx <- liftEffect $ getCanvasContext "game"
+  cursesTileset <- loadImage "curses_square_16x16.bmp"
+  { event: engineState, push: pushEngineState } <- liftEffect create
   -- redraw screen in response to state changes
-  cancelDraw <- subscribe engineState $ \{uia: {uiRender, next}, gs} -> draw ctx uiRender gs
+  cancelDraw <- liftEffect $ subscribe engineState $
+    \{uia: {uiRender, next}, gs} -> draw ctx uiRender gs
   -- step the game in response to user actions
-  cancelEngine <- subscribe (sampleOn engineState (stepEngine <$> down)) pushEngineState
-  pushEngineState { uia: uiInit init, gs: init }
+  cancelEngine <- liftEffect $
+    subscribe (sampleOn engineState (stepEngine <$> down)) pushEngineState
+  liftEffect $ pushEngineState { uia: uiInit init, gs: init }
 
 type EngineState = { uia :: UIAwaitingInput, gs :: GameState }
 
