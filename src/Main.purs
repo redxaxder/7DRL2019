@@ -24,7 +24,6 @@ main :: Effect Unit
 main = unsafePartial $ launchAff_ $ do
   -- initialize canvas
   Just ctx <- getCanvasContext "game" canvasDimensions font
-  -- load tileset
   cursesTileset <- loadImage "curses_square_16x16.bmp"
   liftEffect $ setFont ctx font
   { event: engineState, push: pushEngineState } <- liftEffect create
