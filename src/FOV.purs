@@ -10,7 +10,7 @@ import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Map as M
 import Direction (Direction(..), localMove)
-import Atlas (Atlas, LocalPosition, Position, getElement, move)
+import Atlas (Atlas, LocalPosition, Position(..), getElement, move)
 import Tile (Tile, blocksVision)
 import Math (abs)
 import Types (GameState)
@@ -262,6 +262,3 @@ project (QuadrantPosition q) =
      in { start: angle (w + d)
         , end:   angle (w - d)
         }
-
-getItem :: Position -> GameState -> Maybe Char
-getItem (Position{chartId, localPosition}) _ = todo
