@@ -10,7 +10,7 @@ import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Map as M
 import Direction (Direction(..), localMove)
-import Atlas (Atlas, LocalPosition, Position(..), getElement, move)
+import Atlas (Atlas, LocalPosition, Position, getElement, move)
 import Tile (Tile, blocksVision)
 import Math (abs)
 import Types (GameState)

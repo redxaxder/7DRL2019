@@ -2,7 +2,7 @@ module MapGen where
 
 import Extra.Prelude
 
-import Atlas (Atlas(..), Chart, Position(..), LocalPosition, addStitch, ChartId, mkChart, addChart, mkAtlas)
+import Atlas (Atlas(..), Chart, Position(..), addStitch, ChartId, mkChart, addChart, mkAtlas)
 import Control.MonadZero (guard)
 import Data.Array (unsnoc, cons, catMaybes, concat, zipWith)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -12,7 +12,6 @@ import Direction (add) as Dir
 import Random (Gen)
 import Tile (Tile(..))
 import Types (MapGenHint)
-import Web.HTML.Event.EventTypes (offline)
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 attach :: forall a. Placeholder -> Placeholder -> Atlas a -> Maybe (Atlas a)

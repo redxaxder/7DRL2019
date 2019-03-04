@@ -2,7 +2,7 @@ module Init where
 
 import Extra.Prelude
 
-import Atlas (Atlas, Position(..), Chart, ChartId(..), mkAtlas, mkChart, addChart)
+import Atlas (Position(..), ChartId(..))
 import Data.Map (Map, fromFoldable)
 import Types (GameState, Item)
 import MapGen (initMap)
