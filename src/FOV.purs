@@ -10,12 +10,12 @@ import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Map as M
 import Direction (Direction(..), localMove)
-import Atlas (Atlas, LocalPosition, Position(..), getElement, move)
+import Atlas (Atlas, LocalPosition, Position, getElement, move)
 import Tile (Tile, blocksVision)
 import Math (abs)
 import Types (GameState)
 
-type ScreenPosition = LocalPosition
+type ScreenPosition = { screen :: LocalPosition, absolute :: Position }
 
 newtype QuadrantPosition = QuadrantPosition
   { quadrant :: Quadrant
@@ -28,7 +28,7 @@ derive instance eqQuadrantPosition :: Eq QuadrantPosition
 derive instance ordQuadrantPosition :: Ord QuadrantPosition
 
 toScreen :: QuadrantPosition -> ScreenPosition
-toScreen (QuadrantPosition q) = q.xy
+toScreen (QuadrantPosition q) = { screen: q.xy, absolute: q.position }
 
 data Quadrant = One | Two | Three | Four
 
@@ -40,12 +40,12 @@ quadrants = cons' One [Two, Three, Four]
 
 scan :: Int -> GameState -> Results
 scan distance gs =
-  let 
+  let
       player = gs.player
       atlas = gs.atlas
       contents = getElement player atlas
       init = flip addResult M.empty
-               { pos: V {x:0,y:0}
+               { pos: { screen: V {x:0,y:0}, absolute: player }
                , contents: singleton contents
                }
       subScans = map (scanQuadrant distance player atlas gs) quadrants
@@ -205,7 +205,7 @@ absInt x | x >= 0 = x
 
 shift :: Atlas Tile -> Frontier QuadrantPosition -> Array (Frontier QuadrantPosition)
 shift atlas (Frontier{horz, vert, cells, shadows}) = finish (foldr f init
-  (sortBy (comparing (map absInt <<< toScreen)) cells))
+  (sortBy (comparing (map absInt <<< _.screen <<< toScreen)) cells))
   where
   _ = map toScreen cells
   finish x = x.result <> [Frontier { cells: x.cells , shadows: x.shadows , horz , vert }]

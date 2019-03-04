@@ -2,10 +2,12 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
+import Data.Array (catMaybes)
 import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable)
+import Data.Map (toUnfoldable, lookup)
 import Data.String.CodeUnits (singleton)
 
+import Atlas (Position(..))
 import Constants (displayDimensions, tileDimensions, white)
 import Graphics.Render
   ( Context
@@ -48,10 +50,12 @@ drawStartScreen ctx = do
 drawMain :: Context -> GameState -> Effect Unit
 drawMain ctx gs = do
   clear ctx
-  tiles # traverse_ \(Tuple pos stack) ->
-    drawSpriteToGrid ctx (spriteFromTileStack stack) (toScreenRelative pos)
-  gs.items # traverse_ drawItem
-  drawSpriteToGrid ctx player (toScreenRelative zero)
+  visibleTiles # traverse_ \{ screen, tiles } ->
+    drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
+  visibleItems # traverse_ \{ item, screen } ->
+    drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
+  drawSpriteToGrid ctx player (toCornerRelative zero)
+  pure unit
   where
 
   spriteFromTileStack :: Array Tile -> Sprite
@@ -61,14 +65,25 @@ drawMain ctx gs = do
       Wall -> wall
       _ -> floor
 
-  drawItem :: _ -> Effect Unit
-  drawItem = todo
+  spriteFromItem :: Item -> Sprite
+  spriteFromItem _ = glitch
 
-  tiles :: Array (Tuple (Vector Int) (Array Tile))
-  tiles = toUnfoldable $ scan visionRange gs -- TODO: move this to where it really lives
+  drawItem :: forall a. Position -> a -> Effect Unit
+  drawItem (Position { localPosition }) item =
+    drawSpriteToGrid ctx glitch (toCornerRelative localPosition)
 
-  toScreenRelative :: Vector Int -> Vector Int
-  toScreenRelative (V {x,y}) = V { x: x', y: y' }
+  visibleTiles :: Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
+  visibleTiles =
+    map (\(Tuple { screen, absolute } tiles) -> { screen, absolute, tiles })
+    $ toUnfoldable $ scan visionRange gs
+
+  visibleItems :: Array ({ item :: Item, screen :: Vector Int })
+  visibleItems =
+    catMaybes $ flip map visibleTiles $ \{ screen, absolute } ->
+      map (\item -> { item, screen }) $ lookup absolute gs.items
+
+  toCornerRelative :: Vector Int -> Vector Int
+  toCornerRelative (V {x,y}) = V { x: x', y: y' }
     where
     x' = x + div displayDimensions.width 2
     y' = y + div displayDimensions.height 2
