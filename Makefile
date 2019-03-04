@@ -6,37 +6,13 @@ list: ## Show available targets.
 watch: ## Compile files on change with PSCID (useful for interactive development).
 	@npx pscid -I src/
 
-# .PHONY: compile
-# compile: output/Main/index.js ## Compile all project source files.
-
-# .PHONY: package
-# package: target/game.js target/index.html target/curses_square_16x16.bmp ## Package project build artifacts for distribution.
-
-# tags: output/Main/index.js ## Create machine-readable project documentation.
-# 	@psc-package sources | xargs purs docs --format ctags src/*.purs src/**/*.purs > tags
-
-# .PHONY: build
-# build: compile package ## Full project build (sans tags).
-
 .PHONY: clean
 clean: ## Remove all generated project files (keeps standard library).
 	@find src -type f | cut -d/ -f2- | cut -d. -f1 | sed 's/\//./g' | sed 's/^/output\//' | xargs -L1 rm -rf
 	@rm -rf target/
 
-# output/Main/index.js: $(shell find src/ -type f)
-# 	@psc-package build
-
-# target/game.js: output/Main/index.js
-# 	@purs bundle output/**/*.js --module Main --main Main -o target/game.js
-
-# target/index.html: html/index.html
-# 	@cp html/index.html target/index.html
-
-# target/curses_square_16x16.bmp: data/curses_square_16x16.bmp
-# 	@cp data/curses_square_16x16.bmp target/curses_square_16x16.bmp
-
 .PHONY: build
-build: ## build and package
+build: ## Build source files and package artifacts.
 	@psc-package build
 	@purs bundle output/**/*.js --module Main --main Main -o target/game.js
 	@cp html/index.html target/index.html
