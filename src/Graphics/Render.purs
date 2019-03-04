@@ -1,8 +1,8 @@
-module Graphics.Canvas.Extra where
+module Graphics.Render where
 
 import Extra.Prelude
 
-import Constants (tileDimensions, canvasDimensions, font)
+import Constants (tileDimensions, canvasDimensions, font, white, black, Color(..))
 import Control.Monad.Maybe.Trans (runMaybeT, MaybeT(..))
 import Control.Monad.Trans.Class (lift)
 import Effect.Aff (Aff, makeAff)
@@ -10,7 +10,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Data.String.CodePoints as String
 import Graphics.Canvas as Canvas
-import Graphics.Constants (Sprite(..), white, black, Color (..))
+import Graphics.Sprite (Sprite(..))
 
 newtype Context = Context { context :: Canvas.Context2D, spritesheet :: Canvas.CanvasImageSource }
 
