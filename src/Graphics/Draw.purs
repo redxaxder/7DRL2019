@@ -14,7 +14,7 @@ import Graphics.Render
   , clear
   , setFillStyle
   )
-import Graphics.Sprite (floor, glitch, player, wall)
+import Graphics.Sprite (Sprite, floor, glitch, player, wall)
 import FOV (scan)
 import Tile (Tile(..))
 import Types (GameState, Item, UIRenderData(..))
@@ -48,18 +48,27 @@ drawStartScreen ctx = do
 drawMain :: Context -> GameState -> Effect Unit
 drawMain ctx gs = do
   clear ctx
-  sequence_ $ flip map positions $ \(Tuple pos elements) ->
-    drawSpriteToGrid ctx (getSprite elements) (toScreenRelative pos)
-    -- drawGlyph ctx (getGlyph elements) pos -- drawGlyph is on its way out
-     -- drawSpriteToGrid ctx sprites todo ?y
+  tiles # traverse_ \(Tuple pos stack) ->
+    drawSpriteToGrid ctx (spriteFromTileStack stack) (toScreenRelative pos)
+  gs.items # traverse_ drawItem
   drawSpriteToGrid ctx player (toScreenRelative zero)
   where
-  getSprite xss = case NE.fromArray xss of
-                   Nothing -> glitch
-                   Just xs -> case NE.head xs of
-                                   Wall -> wall
-                                   _ -> floor
-  positions :: Array (Tuple (Vector Int) (Array Tile))
-  positions = toUnfoldable $ scan visionRange gs.player gs.atlas -- TODO: move this to where it really lives
+
+  spriteFromTileStack :: Array Tile -> Sprite
+  spriteFromTileStack xss = case NE.fromArray xss of
+    Nothing -> glitch
+    Just xs -> case NE.head xs of
+      Wall -> wall
+      _ -> floor
+
+  drawItem :: _ -> Effect Unit
+  drawItem = todo
+
+  tiles :: Array (Tuple (Vector Int) (Array Tile))
+  tiles = toUnfoldable $ scan visionRange gs.player gs.atlas -- TODO: move this to where it really lives
+
   toScreenRelative :: Vector Int -> Vector Int
-  toScreenRelative (V {x,y}) = V { x: x + div displayDimensions.width 2, y: y + div displayDimensions.height 2 }
+  toScreenRelative (V {x,y}) = V { x: x', y: y' }
+    where
+    x' = x + div displayDimensions.width 2
+    y' = y + div displayDimensions.height 2
