@@ -1,5 +1,6 @@
 {
   "scripts": {
     "pscid:build": "make clean build"
-  }
+  },
+  "dependencies": {}
 }

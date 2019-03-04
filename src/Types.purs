@@ -12,6 +12,7 @@ type GameState =
  { player :: Position
  , atlas :: Atlas Tile
  , inventory :: Map Char Item
+ , items :: Map Position Item
  }
 
 data UIRenderData = MainGame

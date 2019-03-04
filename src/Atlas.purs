@@ -3,7 +3,7 @@ module Atlas
   , removeStitch
   , mkChart
   , Chart
-  , ChartId
+  , ChartId (..)
   , Position (..)
   , move
   , LocalPosition
