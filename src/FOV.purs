@@ -10,9 +10,10 @@ import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Map as M
 import Direction (Direction(..), localMove)
-import Atlas (Atlas, LocalPosition, Position, getElement, move)
+import Atlas (Atlas, LocalPosition, Position(..), getElement, move)
 import Tile (Tile, blocksVision)
 import Math (abs)
+import Types (GameState)
 
 type ScreenPosition = LocalPosition
 
@@ -37,14 +38,17 @@ derive instance ordQuadrant :: Ord Quadrant
 quadrants :: NonEmptyArray Quadrant
 quadrants = cons' One [Two, Three, Four]
 
-scan :: Int -> Position -> Atlas Tile -> Results
-scan distance position atlas =
-  let contents = getElement position atlas
+scan :: Int -> GameState -> Results
+scan distance gs =
+  let 
+      player = gs.player
+      atlas = gs.atlas
+      contents = getElement player atlas
       init = flip addResult M.empty
                { pos: V {x:0,y:0}
                , contents: singleton contents
                }
-      subScans = map (scanQuadrant distance position atlas) quadrants
+      subScans = map (scanQuadrant distance player atlas gs) quadrants
    in foldr1 (<<<) subScans init
 
 type Result = { pos :: ScreenPosition, contents :: Array Tile }
@@ -57,10 +61,11 @@ scanQuadrant
   :: Int -- distance to scan
   -> Position -- center
   -> Atlas Tile -- for looking up adjacent tiles
+  -> GameState -- for items and mobs
   -> Quadrant -- quadrant to scan
   -> Results -- results so far
   -> Results
-scanQuadrant distance position atlas quadrant acc =
+scanQuadrant distance position atlas gs quadrant acc =
     let (Tuple horz vert) = case quadrant of
           One   -> R |> U
           Two   -> L |> U
@@ -68,7 +73,7 @@ scanQuadrant distance position atlas quadrant acc =
           Four  -> R |> D
         center = QuadrantPosition { position, quadrant, xy: zero}
         frontier = Frontier { cells: [center], shadows: [], horz, vert }
-     in scanHelper distance [frontier] atlas acc
+     in scanHelper distance [frontier] atlas gs acc
 
 type Annotated = { q :: QuadrantPosition
   , screenPosition :: ScreenPosition
@@ -76,16 +81,18 @@ type Annotated = { q :: QuadrantPosition
   , shadow :: Shadow
   , visible :: Boolean
   , blocker :: Boolean
+  , item :: Maybe Char
   }
 
 scanHelper
   :: Int
   -> Array (Frontier QuadrantPosition)
   -> Atlas Tile
+  -> GameState
   -> Results
   -> Results
-scanHelper remaining frontiers atlas acc = if remaining > 0
-          then scanHelper (remaining - 1) nextFrontiers atlas nextAcc
+scanHelper remaining frontiers atlas gs acc = if remaining > 0
+          then scanHelper (remaining - 1) nextFrontiers atlas gs nextAcc
           else nextAcc
   where
   nextAcc = foldr addOne acc visibleCells
@@ -107,10 +114,12 @@ scanHelper remaining frontiers atlas acc = if remaining > 0
     let shadow = project q
         screenPosition = toScreen q
         contents = getElement (unwrap q).position atlas
+        item = getItem (unwrap q).position gs
      in { q, screenPosition
         , contents, shadow
         , visible: not $ anyContains shadows shadow
         , blocker: blocksVision contents
+        , item: item
         }
   grouped :: Array (NonEmptyArray Annotated)
   grouped = groupBy' (comparing _.screenPosition) $
@@ -253,3 +262,6 @@ project (QuadrantPosition q) =
      in { start: angle (w + d)
         , end:   angle (w - d)
         }
+
+getItem :: Position -> GameState -> Maybe Char
+getItem (Position{chartId, localPosition}) _ = todo

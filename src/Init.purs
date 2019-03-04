@@ -2,7 +2,7 @@ module Init where
 
 import Extra.Prelude
 
-import Atlas (Atlas, Position(..), Chart, ChartId, mkAtlas, mkChart, addChart)
+import Atlas (Atlas(..), Position(..), Chart, ChartId, mkAtlas, mkChart, addChart)
 import Control.Monad.State (evalState)
 import Control.Monad.State.Class (state, get)
 import Data.Array (concat, mapWithIndex, catMaybes)
@@ -23,6 +23,7 @@ init = flip evalState defaultAtlas $ do
                            , localPosition: V {x: 1,y: 1}
                            }
        , inventory: exampleInventory
+       , mapItems: exampleItems atlas
        }
 
 exampleInventory :: Map Char Item
@@ -31,6 +32,11 @@ exampleInventory = fromFoldable
   , 'b' |> { name: "Banapple" }
   , 'c' |> { name: "Crabapple" }
   , 'd' |> { name: "Dapple" }
+  ]
+
+exampleItems :: Atlas Tile -> Map Position Item
+exampleItems (Atlas { charts }) =
+  [  examplePosition |> { name: "Zapple" }
   ]
 
 partOne :: Array String

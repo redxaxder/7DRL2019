@@ -60,6 +60,6 @@ drawMain ctx gs = do
                                    Wall -> wall
                                    _ -> floor
   positions :: Array (Tuple (Vector Int) (Array Tile))
-  positions = toUnfoldable $ scan visionRange gs.player gs.atlas -- TODO: move this to where it really lives
+  positions = toUnfoldable $ scan visionRange gs -- TODO: move this to where it really lives
   toScreenRelative :: Vector Int -> Vector Int
   toScreenRelative (V {x,y}) = V { x: x + div displayDimensions.width 2, y: y + div displayDimensions.height 2 }
