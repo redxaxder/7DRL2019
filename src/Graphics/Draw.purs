@@ -2,10 +2,12 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
+import Data.Array (catMaybes)
 import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable)
+import Data.Map (toUnfoldable, lookup)
 import Data.String.CodeUnits (singleton)
 
+import Atlas (Position(..))
 import Constants (displayDimensions, tileDimensions, white)
 import Graphics.Render
   ( Context
@@ -14,7 +16,7 @@ import Graphics.Render
   , clear
   , setFillStyle
   )
-import Graphics.Sprite (floor, glitch, player, wall)
+import Graphics.Sprite (Sprite, floor, glitch, player, wall)
 import FOV (scan)
 import Tile (Tile(..))
 import Types (GameState, Item, UIRenderData(..))
@@ -48,18 +50,40 @@ drawStartScreen ctx = do
 drawMain :: Context -> GameState -> Effect Unit
 drawMain ctx gs = do
   clear ctx
-  sequence_ $ flip map positions $ \(Tuple pos elements) ->
-    drawSpriteToGrid ctx (getSprite elements) (toScreenRelative pos)
-    -- drawGlyph ctx (getGlyph elements) pos -- drawGlyph is on its way out
-     -- drawSpriteToGrid ctx sprites todo ?y
-  drawSpriteToGrid ctx player (toScreenRelative zero)
+  visibleTiles # traverse_ \{ screen, tiles } ->
+    drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
+  visibleItems # traverse_ \{ item, screen } ->
+    drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
+  drawSpriteToGrid ctx player (toCornerRelative zero)
+  pure unit
   where
-  getSprite xss = case NE.fromArray xss of
-                   Nothing -> glitch
-                   Just xs -> case NE.head xs of
-                                   Wall -> wall
-                                   _ -> floor
-  positions :: Array (Tuple (Vector Int) (Array Tile))
-  positions = toUnfoldable $ scan visionRange gs.player gs.atlas -- TODO: move this to where it really lives
-  toScreenRelative :: Vector Int -> Vector Int
-  toScreenRelative (V {x,y}) = V { x: x + div displayDimensions.width 2, y: y + div displayDimensions.height 2 }
+
+  spriteFromTileStack :: Array Tile -> Sprite
+  spriteFromTileStack xss = case NE.fromArray xss of
+    Nothing -> glitch
+    Just xs -> case NE.head xs of
+      Wall -> wall
+      _ -> floor
+
+  spriteFromItem :: Item -> Sprite
+  spriteFromItem _ = glitch
+
+  drawItem :: forall a. Position -> a -> Effect Unit
+  drawItem (Position { localPosition }) item =
+    drawSpriteToGrid ctx glitch (toCornerRelative localPosition)
+
+  visibleTiles :: Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
+  visibleTiles =
+    map (\(Tuple { screen, absolute } tiles) -> { screen, absolute, tiles })
+    $ toUnfoldable $ scan visionRange gs
+
+  visibleItems :: Array ({ item :: Item, screen :: Vector Int })
+  visibleItems =
+    catMaybes $ flip map visibleTiles $ \{ screen, absolute } ->
+      map (\item -> { item, screen }) $ lookup absolute gs.items
+
+  toCornerRelative :: Vector Int -> Vector Int
+  toCornerRelative (V {x,y}) = V { x: x', y: y' }
+    where
+    x' = x + div displayDimensions.width 2
+    y' = y + div displayDimensions.height 2
