@@ -14,7 +14,7 @@ clean: ## Remove all generated project files (keeps standard library).
 .PHONY: build
 build: ## Build source files and package artifacts.
 	@psc-package build
-	@purs bundle output/**/*.js --module Main --main Main -o target/game.js
+	@pulp browserify --no-check-main --to target/game.js
 	@cp html/index.html target/index.html
 	@cp data/curses_square_16x16.bmp target/curses_square_16x16.bmp
 
