@@ -1,4 +1,4 @@
-language: node_js
+language: c
 dist: trusty
 sudo: required
 
@@ -11,7 +11,8 @@ env:
   - PATH=$HOME/purescript:$HOME/psc-package:$PATH
 
 before_install:
-  - npm i -g npm@6.8.0
+  - sudo apt-get install -y npm
+
 
 install:
   - TAG=v0.12.2
@@ -22,7 +23,7 @@ install:
   - wget -O $HOME/psc-package.tar.gz https://github.com/purescript/psc-package/releases/download/$PSC_PACKAGE_TAG/linux64.tar.gz
   - tar -xvf $HOME/psc-package.tar.gz -C $HOME/
   - chmod a+x $HOME/psc-package
-  - npm install pulp
-
+  - npm -v
+  - npm install -g pulp
 script:
   - make clean package
