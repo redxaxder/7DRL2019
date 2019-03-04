@@ -81,7 +81,7 @@ type Annotated = { q :: QuadrantPosition
   , shadow :: Shadow
   , visible :: Boolean
   , blocker :: Boolean
-  , item :: Maybe Char
+  --, item :: Maybe Char
   }
 
 scanHelper
@@ -114,12 +114,12 @@ scanHelper remaining frontiers atlas gs acc = if remaining > 0
     let shadow = project q
         screenPosition = toScreen q
         contents = getElement (unwrap q).position atlas
-        item = getItem (unwrap q).position gs
+        --item = getItem (unwrap q).position gs
      in { q, screenPosition
         , contents, shadow
         , visible: not $ anyContains shadows shadow
         , blocker: blocksVision contents
-        , item: item
+        --, item: item
         }
   grouped :: Array (NonEmptyArray Annotated)
   grouped = groupBy' (comparing _.screenPosition) $
