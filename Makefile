@@ -21,3 +21,6 @@ build: ## Build source files and package artifacts.
 .PHONY: tags
 tags: build ## Create machine-readable project documentation.
 	@psc-package sources | xargs purs docs --format ctags src/*.purs src/**/*.purs > tags
+
+.PHONY: package
+package: build
