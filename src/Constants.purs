@@ -1,8 +1,6 @@
 module Constants where
 
-import Prelude
-
-import Data.Int (toNumber)
+import Extra.Prelude
 
 font :: String
 font = "16px monospace"
@@ -25,3 +23,11 @@ canvasDimensions =
   , height: toNumber $ tileDimensions.height * displayDimensions.height
   }
 
+newtype Color = Color String
+derive instance newtypeColor :: Newtype Color _
+
+black :: Color
+black = Color "#000000"
+
+white :: Color
+white = Color "#FFFFFF"

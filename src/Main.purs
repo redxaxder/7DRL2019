@@ -57,4 +57,3 @@ update gs (Move dir) =
 update gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }
-

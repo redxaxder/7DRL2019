@@ -1,15 +1,4 @@
-module Graphics.Constants where
-
-import Extra.Prelude
-
-newtype Color = Color String
-derive instance newtypeColor :: Newtype Color _
-
-black :: Color
-black = Color "#000000"
-
-white :: Color
-white = Color "#FFFFFF"
+module Graphics.Sprite where
 
 newtype Sprite = Sprite { offsetX :: Int, offsetY :: Int }
 

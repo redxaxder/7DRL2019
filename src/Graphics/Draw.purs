@@ -2,7 +2,7 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
-import Constants (displayDimensions, tileDimensions)
+import Constants (displayDimensions, tileDimensions, white)
 import Data.Array.NonEmpty as NE
 import Data.Map (toUnfoldable)
 import Data.String.CodeUnits (singleton)
@@ -13,7 +13,7 @@ import Graphics.Canvas.Extra
   , clear
   , setFillStyle
   )
-import Graphics.Constants (floor, glitch, player, wall, white)
+import Graphics.Sprite (floor, glitch, player, wall)
 import FOV (scan)
 import Tile (Tile(..))
 import Types (GameState, Item, UIRenderData(..))
