@@ -2,17 +2,17 @@ module MapGen where
 
 import Extra.Prelude
 
-import Web.HTML.Event.EventTypes (offline)
-import Control.MonadZero (guard)
-import Data.FunctorWithIndex (mapWithIndex)
-import Data.String.CodeUnits (toCharArray)
-import Data.Array (unsnoc, cons, catMaybes, concat, zipWith)
-
-import Tile (Tile(..))
 import Atlas (Atlas(..), Chart, Position(..), LocalPosition, addStitch, ChartId, mkChart, addChart, mkAtlas)
-import Direction (Direction (..), opposite, add)
-import Types (MapGenHint)
+import Control.MonadZero (guard)
+import Data.Array (unsnoc, cons, catMaybes, concat, zipWith)
+import Data.FunctorWithIndex (mapWithIndex)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Direction (Direction(..), opposite)
+import Direction (add) as Dir
 import Random (Gen)
+import Tile (Tile(..))
+import Types (MapGenHint)
+import Web.HTML.Event.EventTypes (offline)
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 attach :: forall a. Placeholder -> Placeholder -> Atlas a -> Maybe (Atlas a)
@@ -31,13 +31,18 @@ rotateLeft xs = case sequence $ map unsnoc xs of
   Just pairs -> cons (map (_.last) pairs) (rotateLeft (map (_.init) pairs))
   Nothing -> mempty
   
+rotate :: (Array String) -> Direction -> Array String
+rotate ar U = map fromCharArray $ rotateLeft (map toCharArray ar)
+rotate ar L = map fromCharArray $ rotateLeft $ rotateLeft (map toCharArray ar)
+rotate ar D = map fromCharArray $ rotateLeft $ rotateLeft $ rotateLeft (map toCharArray ar)
+rotate ar _ = ar
 
 type MapData = { terrain :: Array String, next :: Array MapGenHint }
 
 initMap :: Gen -> { atlas :: Atlas Tile, player :: Position }
 initMap g = 
   let { terrain, next } = startRoom { rng: g }
-      { chart, exits } = load next terrain R
+      { chart, exits } = load next terrain D
       errorRoom = mkChart Wall [[Wall]] 
       atlasZero = mkAtlas errorRoom
       Tuple chartId atlas = addChart chart atlasZero
@@ -50,7 +55,7 @@ initMap g =
 
 load :: Array MapGenHint -> Array String -> Direction -> { chart :: Chart Tile, exits :: ChartId -> Array Placeholder }
 load hints rows rotation =
-  let annotations = mapWithIndex getRow rows
+  let annotations = mapWithIndex getRow (rotate rows rotation)
       getRow y row = mapWithIndex (getCell y) (toCharArray row)
       getCell y x c = case charToTile c of
                            Tuple d tile -> { lp: V {x, y}, d, tile }
@@ -60,7 +65,7 @@ load hints rows rotation =
                           Just dir -> Just { dir, localPosition: cell.lp }
                           Nothing -> Nothing
       mkExit chartId {dir, localPosition} next = 
-        { direction: add dir rotation
+        { direction: Dir.add dir rotation
         , position: Position { chartId, localPosition}
         , next
         }
