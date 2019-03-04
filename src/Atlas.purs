@@ -1,6 +1,5 @@
 module Atlas
   ( addStitch
-  , attach
   , removeStitch
   , mkChart
   , Chart
@@ -8,13 +7,12 @@ module Atlas
   , Position (..)
   , move
   , LocalPosition
-  , Atlas
+  , Atlas (..)
   , mkAtlas
   , addChart
   , getElement
   , getChart
   , find
-  , updateAtlas
   ) where
 
 
@@ -27,12 +25,7 @@ import Data.Map (Map, lookup)
 import Data.Map (size, delete, filter, insert, fromFoldable, empty, toUnfoldable) as M
 import Data.Symbol (SProxy(..))
 import Direction (Direction, opposite, localMove)
-import Data.Array (any, catMaybes, filter, mapWithIndex, concat)
-import Data.Array (find) as A
-import Partial.Unsafe (unsafePartial)
-import Control.Monad.State.Class (modify)
-import Control.Monad.State (execState)
-import Control.MonadZero (guard)
+import Data.Array (mapWithIndex, concat)
 
 addStitch :: forall a. Position -> Direction -> Position -> Atlas a -> Atlas a
 addStitch source@(Position a) dir target@(Position b) atlas =
@@ -89,11 +82,10 @@ instance ordPosition :: Ord Position where
 
 newtype Atlas a = Atlas { charts :: Map ChartId (Chart a)
                         , default :: Chart a
-                        , placeholders :: Array Placeholder
                         }
 
 mkAtlas :: forall a. Chart a -> Atlas a
-mkAtlas default = Atlas { default, charts: M.empty, placeholders: mempty }
+mkAtlas default = Atlas { default, charts: M.empty }
 
 derive instance newtypeAtlas :: Newtype (Atlas a) _
 
@@ -114,16 +106,11 @@ setChart :: forall a. ChartId -> Chart a -> Atlas a -> Atlas a
 setChart chartId c atlas = set (chart chartId) c atlas
 
 addChart :: forall a . Chart a
- -> (Array (Tuple LocalPosition Direction))
  -> Atlas a
  -> Tuple ChartId (Atlas a)
-addChart c p atlas@(Atlas a) =
+addChart c atlas@(Atlas a) =
   let chartId = nextId atlas
-      newPlaceholders = flip map p $ \(Tuple localPosition direction) ->
-                        { direction, position: Position { chartId, localPosition } }
-      a' = a { charts = M.insert chartId c a.charts
-             , placeholders = newPlaceholders <> a.placeholders
-             }
+      a' = a { charts = M.insert chartId c a.charts }
    in Tuple chartId (Atlas a')
 
 nextId :: forall a. Atlas a -> ChartId
@@ -195,8 +182,8 @@ type LocalPosition = Vector Int
 -- Placeholders for partial maps
 ------------------------------------------------------------------------------------------
 
-type Placeholder = { position :: Position, direction :: Direction }
 
+{-
 getPlaceholders :: forall a. Position -> Atlas a -> Array Placeholder
 getPlaceholders (Position p) (Atlas a) =
   let cid = p.chartId
@@ -215,19 +202,4 @@ updateAtlas pos a =
 
 findPlaceholder :: forall a. Direction -> Atlas a -> Maybe Placeholder
 findPlaceholder dir (Atlas a) = A.find (\x -> x.direction == dir) a.placeholders
-
-attach :: forall a. Placeholder -> Placeholder -> Atlas a -> Maybe (Atlas a)
-attach start end atlas@(Atlas a) = do
-  guard (start.direction == (opposite end.direction))
-  guard (any (eq start) a.placeholders)
-  guard (any (eq end) a.placeholders)
-  pure
-    $ (removePlaceholder start)
-    <<< (removePlaceholder end)
-    <<< (addStitch start.position start.direction end.position)
-    $ atlas
-
-removePlaceholder :: forall a. Placeholder -> Atlas a -> Atlas a
-removePlaceholder p (Atlas a) = Atlas a{placeholders = filter ((/=) p) a.placeholders}
-
-
+-}

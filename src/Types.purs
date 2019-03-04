@@ -6,6 +6,7 @@ import Data.Map (Map)
 
 import Atlas (Atlas, Position)
 import Tile (Tile)
+import Random (Gen)
 
 type GameState =
  { player :: Position
@@ -19,3 +20,6 @@ data UIRenderData = MainGame
   | InventoryScreen (Maybe {label :: Char, item :: Item})
 
 type Item = { name :: String }
+
+
+type MapGenHint = { rng :: Gen }

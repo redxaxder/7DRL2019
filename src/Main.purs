@@ -9,7 +9,7 @@ import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 import Data.Map (delete)
 
-import Atlas (getElement, move, updateAtlas)
+import Atlas (getElement, move)
 import Graphics.Render (initCanvas)
 import Graphics.Draw (draw)
 import Init (init)
@@ -30,7 +30,8 @@ main = unsafePartial $ launchAff_ $ do
   -- step the game in response to user actions
   cancelEngine <- liftEffect $
     subscribe (sampleOn engineState (stepEngine <$> down)) pushEngineState
-  liftEffect $ pushEngineState { uia: uiInit init, gs: init }
+  gs <- liftEffect $ init
+  liftEffect $ pushEngineState { uia: uiInit gs, gs: gs }
 
 type EngineState = { uia :: UIAwaitingInput, gs :: GameState }
 
@@ -49,7 +50,7 @@ stepEngine key { uia: {uiRender, next}, gs: g} = tailRec go { ui: (next key), gs
 update :: GameState -> Action -> Maybe GameState
 update gs (Move dir) =
   let player = move dir gs.atlas gs.player
-      atlas = updateAtlas player gs.atlas
+      atlas = gs.atlas
    in if blocksMovement (getElement player atlas)
         then Nothing
         else Just $ gs { player = player, atlas = atlas }

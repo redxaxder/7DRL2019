@@ -9,6 +9,7 @@ module Random.Blob
   , perturb
   ) where
 
+{-
 import Extra.Prelude
 
 import Node.Buffer
@@ -22,7 +23,25 @@ import Node.Buffer
 import Effect.Unsafe (unsafePerformEffect)
 
 import Random.Hash (Algorithm (SHA256), hash)
+-}
 
+
+data Blob = Blob
+data Ints = Ints Int Int Int Int Int Int Int Int
+data Doubles = Doubles Number Number Number Number
+
+toDoubles :: Blob -> Doubles
+toDoubles _ = Doubles 0.0 0.0 0.0 0.0
+toInts :: Blob -> Ints
+toInts _ = Ints 0 0 0 0 0 0 0 0
+fromInts :: Ints -> Blob
+fromInts _ = Blob
+perturb :: Blob -> Blob
+perturb _ = Blob
+merge :: Blob -> Blob -> Blob
+merge _ _ = Blob
+
+{-
 -- 256 bit (32 byte) binary blob
 newtype Blob = Blob Buffer
 
@@ -33,8 +52,6 @@ merge (Blob b1) (Blob b2) = Blob $ hash SHA256
 perturb :: Blob -> Blob
 perturb (Blob b) = Blob (hash SHA256 b)
 
-data Ints = Ints Int Int Int Int Int Int Int Int
-data Doubles = Doubles Number Number Number Number
 
 fromInts :: Ints -> Blob
 fromInts (Ints a b c d e f g h) = unsafePerformEffect $ do
@@ -69,3 +86,5 @@ toDoubles (Blob b) = unsafePerformEffect $ Doubles
   <*> readDouble 8 b
   <*> readDouble 16 b
   <*> readDouble 24 b
+
+-}
