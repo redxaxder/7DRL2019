@@ -10,8 +10,7 @@ import FRP.Event.Keyboard (down)
 import Data.Map (delete)
 
 import Atlas (getElement, move, updateAtlas)
-
-import Graphics.Canvas.Extra (initCanvas)
+import Graphics.Render (initCanvas)
 import Graphics.Draw (draw)
 import Init (init)
 import Intent (Action (..))

@@ -1,4 +1,4 @@
-module Graphics.Canvas.Extra where
+module Graphics.Render where
 
 import Extra.Prelude
 

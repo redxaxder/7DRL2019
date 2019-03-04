@@ -31,3 +31,6 @@ black = Color "#000000"
 
 white :: Color
 white = Color "#FFFFFF"
+
+blue :: Color
+blue = Color "#FF0000"
