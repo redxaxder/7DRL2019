@@ -30,11 +30,11 @@ rotateLeft xs = case sequence $ map unsnoc xs of
   Just pairs -> cons (map (_.last) pairs) (rotateLeft (map (_.init) pairs))
   Nothing -> mempty
   
-rotate :: (Array String) -> Direction -> Array String
-rotate ar U = map fromCharArray $ rotateLeft (map toCharArray ar)
-rotate ar L = map fromCharArray $ rotateLeft $ rotateLeft (map toCharArray ar)
-rotate ar D = map fromCharArray $ rotateLeft $ rotateLeft $ rotateLeft (map toCharArray ar)
-rotate ar _ = ar
+rotate :: Direction -> (Array String) -> (Array String)
+rotate U = map fromCharArray <<< rotateLeft <<< map toCharArray
+rotate L = map fromCharArray <<< rotateLeft <<< rotateLeft <<< map toCharArray
+rotate D = map fromCharArray <<< rotateLeft <<< rotateLeft <<< rotateLeft <<< map toCharArray
+rotate R = \a -> a
 
 type MapData = { terrain :: Array String, next :: Array MapGenHint }
 
@@ -54,7 +54,7 @@ initMap g =
 
 load :: Array MapGenHint -> Array String -> Direction -> { chart :: Chart Tile, exits :: ChartId -> Array Placeholder }
 load hints rows rotation =
-  let annotations = mapWithIndex getRow (rotate rows rotation)
+  let annotations = mapWithIndex getRow (rotate rotation rows)
       getRow y row = mapWithIndex (getCell y) (toCharArray row)
       getCell y x c = case charToTile c of
                            Tuple d tile -> { lp: V {x, y}, d, tile }
