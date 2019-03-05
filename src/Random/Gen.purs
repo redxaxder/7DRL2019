@@ -3,6 +3,7 @@ module Random.Gen
   , Random (..)
   , branch
   , chance
+  , element
   , intRange
   , newGen
   , next
@@ -18,6 +19,8 @@ import Extra.Prelude
 
 import Effect.Random (randomInt)
 import Data.Int (floor)
+import Data.Array (index)
+import Partial.Unsafe (unsafePartial)
 
 import Random.Blob (Blob, Ints (..), Doubles(..), toInts, toDoubles, fromInts, perturb, merge)
 
@@ -84,6 +87,11 @@ intRange low high = flip map nextDouble $ \d ->
   let frac = d - toNumber (floor d)
       range = toNumber $ high - low
    in floor (range * frac) + low
+
+element :: forall a. Array a -> Random a
+element arr = unsafeIndex arr <$> intRange 0 (length arr)
+  where
+  unsafeIndex a i = unsafePartial $ fromJust $ index a i
 
 newtype Random a = Random (Gen -> { result :: a, nextGen :: Gen })
 

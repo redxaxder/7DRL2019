@@ -11,9 +11,8 @@ import Direction (Direction(..), opposite)
 import Direction (add) as Dir
 import Random (Gen)
 import Tile (Tile(..))
-import Types (MapGenHint)
+import Types (MapGenHint, Placeholder)
 
-type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 attach :: forall a. Placeholder -> Placeholder -> Atlas a -> Maybe (Atlas a)
 attach start end atlas@(Atlas a) = do
   guard (start.direction == (opposite end.direction))
@@ -22,7 +21,13 @@ attach start end atlas@(Atlas a) = do
     $ atlas
 
 genMapPiece :: Placeholder -> MapGenHint -> Atlas Tile -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }
-genMapPiece { position, direction } { rng } atlas = todo
+genMapPiece p@{ position, direction } hint atlas = 
+  let { terrain, next } = staircase hint
+      { chart, exits } = load next terrain direction
+      (Tuple chartId atlas') = addChart chart atlas
+      placeholders = exits chartId
+      atlas'' = attach p todo atlas'
+   in { atlas: atlas'', placeholders}
 
 
 rotateLeft :: forall a. Array (Array a) -> Array (Array a)
@@ -52,33 +57,49 @@ initMap g =
 
 
 
-load :: Array MapGenHint -> Array String -> Direction -> { chart :: Chart Tile, exits :: ChartId -> Array Placeholder }
+load :: Array MapGenHint -> Array String -> Direction -> { chart :: Chart Tile, exits :: ChartId -> Array Placeholder, entrance :: { localPosition, Direction } }
 load hints rows rotation =
-  let annotations = mapWithIndex getRow (rotate rows rotation)
-      getRow y row = mapWithIndex (getCell y) (toCharArray row)
-      getCell y x c = case charToTile c of
-                           Tuple d tile -> { lp: V {x, y}, d, tile }
-      tiles = (map <<< map) _.tile annotations
-      protoExits = catMaybes $ flip map (concat annotations) $ \cell ->
-                     case cell.d of
-                          Just dir -> Just { dir, localPosition: cell.lp }
-                          Nothing -> Nothing
-      mkExit chartId {dir, localPosition} next = 
+  let mapTokens = toMapTokens rows
+      indexedMap = addIndices mapTokens
+      tiles = (map <<< map) getTile mapTokens
+      protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
+                     case a of
+                          Exit dir -> Just { localPosition: V {x,y}, dir }
+                          _ -> Nothing
+      mkExit chartId { dir, localPosition } next = 
         { direction: Dir.add dir rotation
         , position: Position { chartId, localPosition}
         , next
         }
       exits cid = zipWith (mkExit cid) protoExits hints
-      chart = mkChart Wall tiles
-   in { chart, exits }
 
-charToTile :: Char -> Tuple (Maybe Direction) Tile
-charToTile '#' = Tuple Nothing Wall
-charToTile '^' = Tuple (Just U) Empty
-charToTile 'v' = Tuple (Just D) Empty
-charToTile '<' = Tuple (Just L) Empty
-charToTile '>' = Tuple (Just R) Empty
-charToTile _ =   Tuple Nothing Empty
+      entrance = case find (isEntrance <<< _.a) indexedMap of
+        Nothing ->
+        Just {x,y} -> \cid -> { }
+
+      chart = mkChart Wall tiles
+   in { chart, exits, entrance }
+
+data MapToken = T Tile | Exit Direction | Entrance
+
+addIndices :: forall a. Array (Array a) -> Array { x :: Int, y :: Int, a :: a }
+addIndices = todo
+
+getTile :: MapToken -> Tile
+getTile (T a) = a
+getTile _ = Empty
+
+toMapTokens :: Array String -> Array Array MapToken
+toMapTokens rows = (map getMapToken <<< toCharArray) <$> rows
+
+getMapToken :: Char -> MapToken
+getMapToken '#' = T Wall
+getMapToken '^' = Exit U
+getMapToken 'v' = Exit D
+getMapToken '<' = Exit L
+getMapToken '>' = Exit R
+getMapToken '!' = Entrance
+getMapToken _ =   T Empty
 
 defaultAtlas :: Atlas Tile
 defaultAtlas = mkAtlas defaultChart
