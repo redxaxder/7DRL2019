@@ -10,7 +10,6 @@ import Data.Map as Map
 import Data.Set as Set 
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Exception (throwException)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 import Graphics.Draw (draw)
@@ -19,8 +18,8 @@ import Init (init)
 import Intent (Action(..))
 import Partial.Unsafe (unsafePartial)
 import Tile (blocksMovement)
-import Types (GameState, Item)
-import UserInterface (Key, UI(..), UIAwaitingInput, inventory, uiInit)
+import Types (GameState)
+import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
 main = unsafePartial $ launchAff_ $ do
