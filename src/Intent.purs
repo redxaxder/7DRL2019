@@ -8,7 +8,7 @@ import Extra.Prelude
 import Direction (Direction (..))
 import Types (GameState)
 
-data Action = Move Direction | Drop Char
+data Action = Move Direction | Drop Char | Pass
 
 type Key = String
 getAction :: GameState -> Key -> Maybe Action

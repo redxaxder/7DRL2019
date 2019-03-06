@@ -13,7 +13,7 @@ import Direction (Direction(..), localMove)
 import Atlas (Atlas, LocalPosition, Position, getElement, move)
 import Tile (Tile, blocksVision)
 import Math (abs)
-import Types (GameState)
+import Types (GameState, FieldOfView)
 
 type ScreenPosition = { screen :: LocalPosition, absolute :: Position }
 
@@ -37,6 +37,10 @@ derive instance ordQuadrant :: Ord Quadrant
 
 quadrants :: NonEmptyArray Quadrant
 quadrants = cons' One [Two, Three, Four]
+
+visibleTiles :: Int -> GameState -> FieldOfView
+visibleTiles range gs = map (\(Tuple { screen, absolute } tiles) -> { screen, absolute, tiles })
+  $ M.toUnfoldable $ scan range gs
 
 scan :: Int -> GameState -> Results
 scan distance gs =

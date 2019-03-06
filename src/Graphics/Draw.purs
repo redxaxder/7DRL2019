@@ -17,7 +17,6 @@ import Graphics.Render
   , setFillStyle
   )
 import Graphics.Sprite (Sprite, floor, glitch, player, wall)
-import FOV (scan)
 import Tile (Tile(..))
 import Types (GameState, Item, UIRenderData(..))
 
@@ -50,7 +49,7 @@ drawStartScreen ctx = do
 drawMain :: Context -> GameState -> Effect Unit
 drawMain ctx gs = do
   clear ctx
-  visibleTiles # traverse_ \{ screen, tiles } ->
+  gs.fov # traverse_ \{ screen, tiles } ->
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
   visibleItems # traverse_ \{ item, screen } ->
     drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
@@ -72,14 +71,9 @@ drawMain ctx gs = do
   drawItem (Position { localPosition }) item =
     drawSpriteToGrid ctx glitch (toCornerRelative localPosition)
 
-  visibleTiles :: Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
-  visibleTiles =
-    map (\(Tuple { screen, absolute } tiles) -> { screen, absolute, tiles })
-    $ toUnfoldable $ scan visionRange gs
-
   visibleItems :: Array ({ item :: Item, screen :: Vector Int })
   visibleItems =
-    catMaybes $ flip map visibleTiles $ \{ screen, absolute } ->
+    catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
       map (\item -> { item, screen }) $ lookup absolute gs.items
 
   toCornerRelative :: Vector Int -> Vector Int

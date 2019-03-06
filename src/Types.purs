@@ -15,6 +15,7 @@ type GameState =
  , inventory :: Map Char Item
  , items :: Map Position Item
  , placeholders :: Map Position Placeholder
+ , fov :: FieldOfView
  }
 
 data UIRenderData = MainGame
@@ -27,3 +28,6 @@ type Item = { name :: String }
 type MapGenHint = { rng :: Gen }
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
+
+
+type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }

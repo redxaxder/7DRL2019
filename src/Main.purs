@@ -2,7 +2,6 @@ module Main where
 
 import Extra.Prelude
 
-import Atlas (getElement, move)
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Data.Enum (enumFromTo)
 import Data.Map (delete)
@@ -14,11 +13,15 @@ import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
+import Partial.Unsafe (unsafePartial)
+
+import Atlas (getElement, move)
+import FOV (visibleTiles)
 import Init (init)
 import Intent (Action(..))
-import Partial.Unsafe (unsafePartial)
 import Tile (blocksMovement)
 import Types (GameState)
+import MapGen (expandMap)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -32,7 +35,7 @@ main = unsafePartial $ launchAff_ $ do
   -- step the game in response to user actions
   cancelEngine <- liftEffect $
     subscribe (sampleOn engineState (stepEngine <$> down)) pushEngineState
-  gs <- liftEffect $ init
+  gs <- liftEffect $ stepEnvironment <$> init
   liftEffect $ pushEngineState { uia: uiInit gs, gs: gs }
 
 type EngineState = { uia :: UIAwaitingInput, gs :: GameState }
@@ -50,7 +53,13 @@ stepEngine key { uia: {uiRender, next}, gs: g} = tailRec go { ui: (next key), gs
                 Just nextGs -> Loop { ui: cont nextGs, gs: nextGs }
 
 update :: GameState -> Action -> Maybe GameState
-update gs a = pickUpItem <$> handleAction gs a
+update gs a = stepEnvironment <$> handleAction gs a
+
+stepEnvironment :: GameState -> GameState
+stepEnvironment = expandMap <<< pickUpItem <<< updateFOV
+
+updateFOV :: GameState -> GameState
+updateFOV gs = gs { fov = visibleTiles 10 gs }
 
 handleAction :: GameState -> Action -> Maybe GameState
 handleAction gs (Move dir) =
@@ -62,6 +71,7 @@ handleAction gs (Move dir) =
 handleAction gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }
+handleAction gs Pass = Just gs
 
 letters :: Set.Set Char
 letters = Set.fromFoldable (enumFromTo 'a' 'z' :: Array Char)

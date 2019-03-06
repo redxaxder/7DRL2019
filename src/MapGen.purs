@@ -12,7 +12,11 @@ import Direction (Direction(..))
 import Direction as Dir
 import Random (Gen)
 import Tile (Tile(..))
-import Types (MapGenHint, Placeholder)
+import Types (GameState, MapGenHint, Placeholder)
+
+
+expandMap :: GameState -> GameState
+expandMap gs = gs -- todo
 
 
 genMapPiece :: Placeholder -> MapGenHint -> Atlas Tile -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }

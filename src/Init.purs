@@ -17,6 +17,7 @@ init = do
        , inventory: exampleInventory
        , items: exampleItems
        , placeholders: mempty
+       , fov: mempty
        }
 
 exampleInventory :: Map Char Item
