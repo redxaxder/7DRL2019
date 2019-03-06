@@ -1,4 +1,4 @@
-module MapGen where
+module Map.Gen where
 
 import Extra.Prelude
 
@@ -13,9 +13,10 @@ import Control.Monad.Rec.Class (Step (..), tailRec)
 import Atlas (Atlas, Chart, LocalPosition, Position(..), addStitch, ChartId, mkChart, addChart, mkAtlas)
 import Direction (Direction(..))
 import Direction as Dir
-import Random (Gen)
+import Random (Gen, Random, branch, runRandom', element)
 import Tile (Tile(..))
-import Types (GameState, MapGenHint, Placeholder)
+import Types (GameState, MapGenHint, Placeholder, MapData)
+import Map.Data (staircase, startRoom, rooms)
 
 
 expandMap :: GameState -> Maybe GameState
@@ -38,12 +39,11 @@ expandMap gs = if length visiblePlaceholders == 0
     Just { head, tail } -> let { atlas: atlas', placeholders } = genMapPiece head atlas 
                            in Loop { atlas: atlas', visible: tail, toAdd: toAdd <> placeholders }
 
-  
-
 genMapPiece :: Placeholder -> Atlas Tile -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }
-genMapPiece p@{ position, direction, next: hint } atlas =
-  let { terrain, next } = staircase hint
-      { chart, exits, entrance } = load next terrain direction
+genMapPiece p@{ position, direction, next: {rng} } atlas = 
+  let { chart, exits, entrance } = flip runRandom' rng $ do 
+        room <- element rooms
+        load room direction
       (Tuple chartId atlas') = addChart chart atlas
       entrancePosition = Position { chartId, localPosition: entrance }
       placeholders = exits chartId
@@ -58,12 +58,9 @@ rotateLeft xs = case sequence $ map unsnoc xs of
 rotate :: forall a. Direction -> Array (Array a) -> Array (Array a)
 rotate d = repeatedly (Dir.toInt d) rotateLeft
 
-type MapData = { terrain :: Array String, next :: Array MapGenHint }
-
 initMap :: Gen -> { atlas :: Atlas Tile, player :: Position, placeholders :: Map Position Placeholder }
 initMap g =
-  let { terrain, next } = startRoom { rng: g }
-      { chart, exits } = load next terrain R
+  let { chart, exits } = flip runRandom' g $ load startRoom R
       errorRoom = mkChart Wall [[Wall]]
       atlasZero = mkAtlas errorRoom
       Tuple chartId atlas = addChart chart atlasZero
@@ -73,15 +70,14 @@ initMap g =
       }
 
 load
-  :: Array MapGenHint
-  -> Array String
+  :: MapData
   -> Direction
-  -> { chart :: Chart Tile
+  -> Random { chart :: Chart Tile
      , exits :: ChartId -> Array Placeholder
      , entrance :: LocalPosition
      }
-load hints rows rotation =
-  let mapTokens = rotate rotation $ toMapTokens rows
+load {terrain} rotation = do
+  let mapTokens = rotate rotation $ toMapTokens terrain
       indexedMap = addIndices mapTokens
       tiles = (map <<< map) getTile mapTokens
       protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
@@ -93,12 +89,13 @@ load hints rows rotation =
         , position: Position { chartId, localPosition}
         , next
         }
-      exits cid = zipWith (mkExit cid) protoExits hints
       entrance = case find (isEntrance <<< _.a) indexedMap of
-        Nothing -> V { x:100, y:1000 } -- no entrance marker in templace; just add one wherever
+        Nothing -> V { x:100, y:1000 } -- no entrance marker in template; just add one wherever
         Just {x,y} -> V { x, y }
       chart = mkChart Wall tiles
-   in { chart, exits, entrance }
+  generators <- traverse (\_ -> branch) protoExits
+  let exits cid = zipWith (mkExit cid) protoExits (( \rng -> {rng}) <$> generators )
+  pure { chart, exits, entrance }
 
 data MapToken = T Tile | Exit Direction | Entrance
 
@@ -131,55 +128,4 @@ defaultAtlas = mkAtlas defaultChart
 
 defaultChart :: Chart Tile
 defaultChart = mkChart Wall mempty
-
-startRoom :: MapGenHint -> MapData
-startRoom {rng} = 
-  { terrain:
-      [ "##########"
-      , "#......#^#"
-      , "#....#...#"
-      , "#........#"
-      , "#...#....#"
-      , "#........#"
-      , "##########"
-      ]
-  , next: [{rng}]
-  }
-
-sampleMap1 :: MapGenHint -> MapData
-sampleMap1 {rng} = 
-  { terrain:
-      [ "######^######"
-      , "#####...#####"
-      , "###.......###"
-      , "#...........>"
-      , "!...........#"
-      , "###.#.....###"
-      , "#####...#####"
-      , "######v######"
-      ]
-  , next: [{rng},{rng},{rng}]
-  }
-
-sampleHall1 :: MapGenHint -> MapData
-sampleHall1 {rng} = 
-  { terrain: 
-    [ "#######"
-    , "!.....>"
-    , "#######"
-    ]
-  , next: [{rng}]
-  }
-
-staircase :: MapGenHint -> MapData  
-staircase {rng} = 
-  { terrain:
-    [ "###"
-    , "<.#"
-    , "#.#"
-    , "#!#"
-    , "###"
-    ]
-  , next: [{rng}]
-  }  
   

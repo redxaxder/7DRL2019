@@ -12,6 +12,7 @@ module Random.Gen
   , nextInt
   , nextInts
   , runRandom
+  , runRandom'
   , split
   ) where
 
@@ -83,13 +84,10 @@ chance :: Int -> Random Boolean
 chance p = (>) p <$> intRange 0 100
 
 intRange :: Int -> Int -> Random Int
-intRange low high = flip map nextDouble $ \d ->
-  let frac = d - toNumber (floor d)
-      range = toNumber $ high - low
-   in floor (range * frac) + low
+intRange low high = flip map nextInt $ \i -> (i `mod` (high - low + 1)) + low
 
 element :: forall a. Array a -> Random a
-element arr = unsafeIndex arr <$> intRange 0 (length arr)
+element arr = unsafeIndex arr <$> intRange 0 (length arr - 1)
   where
   unsafeIndex a i = unsafePartial $ fromJust $ index a i
 
@@ -97,6 +95,9 @@ newtype Random a = Random (Gen -> { result :: a, nextGen :: Gen })
 
 runRandom :: forall a. Random a -> Gen -> { result :: a, nextGen :: Gen}
 runRandom = un Random
+
+runRandom' :: forall a. Random a -> Gen -> a
+runRandom' r g = _.result $ runRandom r g
 
 instance functorRandom :: Functor Random where
   map f (Random r) =

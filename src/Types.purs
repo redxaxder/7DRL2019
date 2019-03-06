@@ -24,10 +24,10 @@ data UIRenderData = MainGame
 
 type Item = { name :: String }
 
-
 type MapGenHint = { rng :: Gen }
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 
-
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
+
+type MapData = { terrain :: Array String }

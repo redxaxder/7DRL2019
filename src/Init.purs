@@ -5,7 +5,7 @@ import Extra.Prelude
 import Atlas (Position(..), ChartId(..))
 import Data.Map (Map, fromFoldable)
 import Types (GameState, Item)
-import MapGen (initMap)
+import Map.Gen (initMap)
 import Random (newGen)
 
 init :: Effect GameState

@@ -21,7 +21,7 @@ import Init (init)
 import Intent (Action(..))
 import Tile (blocksMovement)
 import Types (GameState)
-import MapGen (expandMap)
+import Map.Gen (expandMap)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit

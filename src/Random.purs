@@ -9,6 +9,7 @@ import Random.Gen
   , Random (..)
   , branch
   , chance
+  , element
   , intRange
   , newGen
   , next
@@ -17,6 +18,7 @@ import Random.Gen
   , nextInt
   , nextInts
   , runRandom
+  , runRandom'
   , split
   )
 
