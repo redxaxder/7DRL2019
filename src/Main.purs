@@ -56,7 +56,14 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = expandMap <<< pickUpItem <<< updateFOV
+stepEnvironment = pickUpItem <<< tailRec expand
+  where
+  expand :: GameState -> Step GameState GameState
+  expand gs = let gs' = updateFOV gs
+              in case expandMap gs' of
+                    Nothing -> Done gs'
+                    Just gs'' -> Loop gs''
+
 
 updateFOV :: GameState -> GameState
 updateFOV gs = gs { fov = visibleTiles 10 gs }

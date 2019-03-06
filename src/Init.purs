@@ -11,12 +11,12 @@ import Random (newGen)
 init :: Effect GameState
 init = do
   gen <- newGen
-  let { atlas, player } = initMap gen
+  let { atlas, player, placeholders } = initMap gen
   pure { atlas
        , player
        , inventory: exampleInventory
        , items: exampleItems
-       , placeholders: mempty
+       , placeholders
        , fov: mempty
        }
 
