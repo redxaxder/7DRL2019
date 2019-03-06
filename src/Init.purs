@@ -16,6 +16,7 @@ init = do
        , player
        , inventory: exampleInventory
        , items: exampleItems
+       , placeholders: mempty
        }
 
 exampleInventory :: Map Char Item

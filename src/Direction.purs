@@ -1,13 +1,4 @@
-module Direction 
-  ( Direction (..)
-  , rotate
-  , add
-  , clockwise
-  , widdershins
-  , opposite
-  , localMove
-  )
-where
+module Direction where
 
 import Prelude
 

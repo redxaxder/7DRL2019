@@ -24,12 +24,14 @@ module Extra.Prelude
   , groupBy'
   , groupToMap
   , keyBy
+  , repeatedly
   , todo
   , unsafeFromJust
   ) where
 
 import Prelude
 
+import Control.Monad.Rec.Class (Step (..), tailRec)
 import Data.Array (cons, groupBy, singleton, sortBy)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
@@ -113,6 +115,13 @@ todo = unsafePartial $ crash "Not implemented"
 countIf :: forall a t. Foldable t => (a -> Boolean) -> t a -> Int
 countIf f xs = foldr g 0 xs
   where g x acc = if f x then acc + 1 else acc
+
+repeatedly :: forall a. Int -> (a -> a) -> a -> a
+repeatedly n' f a' = tailRec go {n: n',a: a'}
+  where
+  go { n, a } = if (n <= 0)
+                  then Done a
+                  else Loop { n: n-1, a: f a }
 
 
 unsafeFromJust :: forall a. Maybe a -> a

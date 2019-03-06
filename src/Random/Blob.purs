@@ -33,6 +33,7 @@ merge (Blob b1) (Blob b2) = Blob $ hash SHA256
 perturb :: Blob -> Blob
 perturb (Blob b) = Blob (hash SHA256 b)
 
+data Ints = Ints Int Int Int Int Int Int Int Int
 
 fromInts :: Ints -> Blob
 fromInts (Ints a b c d e f g h) = unsafePerformEffect $ do
@@ -60,6 +61,8 @@ toInts (Blob b) = unsafePerformEffect $ Ints
 
 
 foreign import readDouble :: Int -> Buffer -> Effect Number
+
+data Doubles = Doubles Number Number Number Number
 
 toDoubles :: Blob -> Doubles
 toDoubles (Blob b) = unsafePerformEffect $ Doubles
