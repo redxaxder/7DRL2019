@@ -27,7 +27,7 @@ import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 main :: Effect Unit
 main = unsafePartial $ launchAff_ $ do
   -- initialize canvas
-  Just ctx <- initCanvas { canvasId: "game", spritesheetPath: "curses_square_16x16.bmp" }
+  Just ctx <- initCanvas { canvasId: "game", spritesheetPath: "tileset.png" }
   { event: engineState, push: pushEngineState } <- liftEffect create
   -- redraw screen in response to state changes
   cancelDraw <- liftEffect $ subscribe engineState $

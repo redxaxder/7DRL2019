@@ -7,8 +7,8 @@ font = "16px monospace"
 
 tileDimensions :: { width ∷ Int, height ∷ Int }
 tileDimensions =
-  { width: 16
-  , height: 16
+  { width: 32
+  , height: 32
   }
 
 displayDimensions :: { width ∷ Int, height ∷ Int }

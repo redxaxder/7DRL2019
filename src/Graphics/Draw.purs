@@ -16,8 +16,8 @@ import Graphics.Render
   , clear
   , setFillStyle
   )
-import Graphics.Sprite (Sprite, floor, glitch, player, wall)
-import Tile (Tile(..))
+import Graphics.Sprite (Sprite, glitch, player, tileSprite)
+import Tile (Tile)
 import Types (GameState, Item, UIRenderData(..))
 
 visionRange :: Int -- TODO: move this to where it really lives
@@ -60,9 +60,7 @@ drawMain ctx gs = do
   spriteFromTileStack :: Array Tile -> Sprite
   spriteFromTileStack xss = case NE.fromArray xss of
     Nothing -> glitch
-    Just xs -> case NE.head xs of
-      Wall -> wall
-      _ -> floor
+    Just xs -> tileSprite $ NE.head xs
 
   spriteFromItem :: Item -> Sprite
   spriteFromItem _ = glitch
