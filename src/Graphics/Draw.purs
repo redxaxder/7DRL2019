@@ -4,7 +4,7 @@ import Extra.Prelude
 
 import Data.Array (catMaybes)
 import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable, lookup)
+import Data.Map (Map, toUnfoldable, lookup)
 import Data.String.CodeUnits (singleton)
 
 import Atlas (Position(..))
@@ -17,8 +17,9 @@ import Graphics.Render
   , setFillStyle
   )
 import Data.Sprite (glitch, player)
+import Data.Furniture (furnitureSprite)
 import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite)
+import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite, Furniture)
 
 import Data.Item (itemSprite, itemName)
 import Data.Mob (Mob)
@@ -60,9 +61,11 @@ drawMain ctx gs = do
   clear ctx
   gs.fov # traverse_ \{ screen, tiles } ->
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
-  visibleItems # traverse_ \{ item, screen } ->
-    drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
---  visibleMobs # traverse_ \{ mob, screen } ->
+  getVisible gs.furniture # traverse_ \{ a, screen } ->
+    drawSpriteToGrid ctx (furnitureSprite a) (toCornerRelative screen)
+  getVisible gs.items # traverse_ \{ a, screen } ->
+    drawSpriteToGrid ctx (spriteFromItem a) (toCornerRelative screen)
+--  getVisible gs.mobs # traverse_ \{ a: mob, screen } ->
 --    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
   pure unit
@@ -80,15 +83,9 @@ drawMain ctx gs = do
   drawItem (Position { localPosition }) item =
     drawSpriteToGrid ctx (itemSprite item) (toCornerRelative localPosition)
 
-  visibleItems :: Array ({ item :: Item, screen :: Vector Int })
-  visibleItems =
-    catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
-      map (\item -> { item, screen }) $ lookup absolute gs.items
-
-  visibleMobs :: Array ({ mob :: Mob, screen :: Vector Int })
-  visibleMobs =
-    catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
-      map (\mob -> { mob, screen}) $ lookup absolute gs.mobs
+  getVisible :: forall a. Map Position a -> Array { a :: a, screen :: Vector Int }
+  getVisible m = catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
+      map (\a -> { a, screen }) $ lookup absolute m
 
   toCornerRelative :: Vector Int -> Vector Int
   toCornerRelative (V {x,y}) = V { x: x', y: y' }

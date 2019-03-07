@@ -1,46 +1,82 @@
-module Data.Furniture where
+module Data.Furniture
+  ( Furniture (..)
+  , FurnitureType
+  , counter
+  , furniture
+  , furnitureByChar
+  , furnitureSprite
+  , hasAttribute
+  , mkFurniture
+  )
+  where
 
 import Extra.Prelude
 
 import Data.Map (Map)
+import Data.Map as Map
+import Partial.Unsafe (unsafePartial)
+
 
 import Data.Attribute (Attribute (..))
 import Data.Sprite (Sprite, spriteAt)
 
-newtype FurnitureName = FurnitureName String
-derive instance eqFurnitureName :: Eq FurnitureName
-derive instance ordFurnitureName :: Ord FurnitureName
-derive instance newtypeFurnitureName :: Newtype FurnitureName _
 
-newtype Furniture = Furniture
-  { name :: FurnitureName
+newtype Furniture = Furniture { name :: FurnitureType }
+mkFurniture :: FurnitureType -> Furniture
+mkFurniture name = Furniture { name }
+
+derive instance newtypeFurniture :: Newtype Furniture _
+
+instance showFurniture :: Show Furniture where
+  show (Furniture {name}) = un FurnitureType name
+
+newtype FurnitureType = FurnitureType String
+derive instance eqFurnitureType :: Eq FurnitureType
+derive instance ordFurnitureType :: Ord FurnitureType
+derive instance newtypeFurnitureType :: Newtype FurnitureType _
+
+
+type FurnitureRecord =
+  { name :: FurnitureType
   , char :: Char
   , sprite :: Sprite
   , attributes :: Array Attribute
   }
-derive instance newtypeFurniture :: Newtype Furniture _
 
-f :: Char -> Int -> Int -> String -> Array String -> Furniture
-f char x y name attributes = Furniture
+f :: Char -> Int -> Int -> String -> Array String -> FurnitureRecord
+f char x y name attributes =
   { char
   , sprite: spriteAt x y
-  , name: FurnitureName name
+  , name: FurnitureType name
   , attributes: Attribute <$> attributes
   }
 
-counter :: Furniture
-counter = f 'C' 6 1 "Counter" []
+counter :: FurnitureType
+counter = FurnitureType "Counter"
 
-furniture :: Array Furniture
-furniture =
-  [ f 'S' 3 1 "Stove" [ "heat" ]
-  , f 'O' 4 1 "Oven"  [ "heat" ]
-  , f 'B' 5 1 "Cutting board" []
-  , counter
+furnitureRecords :: Array FurnitureRecord
+furnitureRecords =
+  [ { char: 'C', sprite: spriteAt 6 1, name: counter, attributes: [] }
+  , f       'S'                   3 1        "Stove"              [ "heat" ]
+  , f       'O'                   4 1        "Oven"               [ "heat" ]
+  , f       'B'                   5 1        "Cutting board"      []
   ]
 
-furnitureSprite :: Furniture -> Sprite
-furnitureSprite = _.sprite <<< un Furniture
+furniture :: Array FurnitureType
+furniture =  _.name <$> furnitureRecords
 
-furnitureByChar :: Map Char Furniture
-furnitureByChar = keyBy (_.char <<< un Furniture) furniture
+furnitureMap :: Map FurnitureType FurnitureRecord
+furnitureMap = keyBy _.name furnitureRecords
+
+getFurnitureRecord :: FurnitureType -> FurnitureRecord
+getFurnitureRecord name = unsafePartial $ fromJust $ Map.lookup name furnitureMap
+  -- As long as FurnitureType is only constructed in `furnitureRecords` this is safe
+
+furnitureSprite :: Furniture -> Sprite
+furnitureSprite = _.sprite <<< getFurnitureRecord <<< _.name <<< un Furniture
+
+furnitureByChar :: Map Char FurnitureType
+furnitureByChar = keyBy (_.char <<< getFurnitureRecord) furniture
+
+hasAttribute :: Furniture -> Attribute -> Boolean
+hasAttribute (Furniture {name}) attr = elem attr (getFurnitureRecord name).attributes

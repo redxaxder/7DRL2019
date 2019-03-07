@@ -17,7 +17,7 @@ import Data.Map (Map)
 
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
-import Data.Furniture (Furniture (..), FurnitureName (..))
+import Data.Furniture (FurnitureType, Furniture (..))
 import Data.Item (Item (..), ItemName (..))
 import Data.Maps (MapData (..))
 import Data.Mob (Mob (..), MobName (..))
@@ -35,13 +35,14 @@ type GameState =
  , placeholders :: Map Position Placeholder
  , fov :: FieldOfView
  , mobs :: Map Position Mob
+ , furniture :: Map Position Furniture
  }
 
 data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
 
-type MapGenHint = { rng :: Gen }
+type MapGenHint = { rng :: Gen, region :: Region }
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 
