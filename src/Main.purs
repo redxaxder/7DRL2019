@@ -97,3 +97,7 @@ pickUpItem gs =
     in case maybeUpdated of
          Nothing -> gs
          Just { newInventory, newItems } -> gs { inventory = newInventory, items = newItems }
+
+-- monsters move towards the player, first x then y
+simpleMonsterUpdate :: GameState -> GameState
+simpleMonsterUpdate gs = todo

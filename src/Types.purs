@@ -8,6 +8,7 @@ import Atlas (Atlas, Position)
 import Tile (Tile)
 import Random (Gen)
 import Direction (Direction)
+import Graphics.Sprite (Sprite)
 
 type GameState =
  { player :: Position
@@ -16,6 +17,7 @@ type GameState =
  , items :: Map Position Item
  , placeholders :: Map Position Placeholder
  , fov :: FieldOfView
+ , mobs :: Map Position Mob
  }
 
 data UIRenderData = MainGame
@@ -31,3 +33,5 @@ type Placeholder = { position :: Position, direction :: Direction, next :: MapGe
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
 
 type MapData = { terrain :: Array String }
+
+type Mob = { name :: String, gfx :: Sprite }

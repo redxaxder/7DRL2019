@@ -1,6 +1,7 @@
 module Graphics.Sprite where
 
-import Tile (Tile (..))
+--import Canvas (Sprite(..))
+import Tile (Tile(..))
 
 newtype Sprite = Sprite { offsetX :: Int, offsetY :: Int }
 
@@ -17,3 +18,6 @@ player = spriteAt 4 0
 
 glitch :: Sprite
 glitch = spriteAt 4 3
+
+bananamatronicHusk :: Sprite
+bananamatronicHusk = spriteAt 0 1
