@@ -10,7 +10,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Data.String.CodePoints as String
 import Graphics.Canvas as Canvas
-import Graphics.Sprite (Sprite(..))
+import Types (Sprite (..))
 
 newtype Context = Context { context :: Canvas.Context2D, spritesheet :: Canvas.CanvasImageSource }
 

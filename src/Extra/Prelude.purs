@@ -24,6 +24,7 @@ module Extra.Prelude
   , groupBy'
   , groupToMap
   , keyBy
+  , keyBy'
   , repeatedly
   , todo
   , unsafeFromJust
@@ -32,11 +33,12 @@ module Extra.Prelude
 import Prelude
 
 import Control.Monad.Rec.Class (Step (..), tailRec)
-import Data.Array (cons, groupBy, singleton, sortBy)
+import Data.Array (groupBy, sortBy, zip)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, null, length, foldr, foldl, sum)
 import Data.Map (Map, alter, empty)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)
 import Data.Newtype (class Newtype, unwrap, un)
 import Data.Semigroup.Foldable (class Foldable1, foldMap1)
@@ -80,14 +82,6 @@ foreach = flip traverse_
 groupBy' :: forall a. (a -> a -> Ordering) -> Array a -> Array (NonEmptyArray a)
 groupBy' f xs =  groupBy ((map <<< map) (_ == EQ) f) <<< sortBy f $ xs
 
-keyBy :: forall f k a. Foldable f => Ord k => (a -> k) -> f a -> Map k (Array a)
-keyBy k = foldr (\v m -> alter (combine v) (k v) m) empty
-  where
-  combine :: a -> Maybe (Array a) -> Maybe (Array a)
-  combine v (Just v') = Just $ cons v v'
-  combine v Nothing = Just $ singleton v
-
-
 groupToMap :: forall f k a b
   . Foldable f => Ord k
  => { key :: a -> k
@@ -130,4 +124,13 @@ unsafeFromJust x = unsafePartial (fromJust x)
 
 class Monoid a <= Group a where
   invert :: a -> a
+
+
+keyBy :: forall k v. Ord k => (v -> k) -> Array v -> Map k v
+keyBy f vs = Map.fromFoldable $ zip (f <$> vs) vs
+
+keyBy' :: forall k v. Ord k => (v -> Maybe k) -> Array v -> Map k v
+keyBy' f vs = Map.fromFoldable $ vs >>= \v ->
+  maybe [] (\k-> [Tuple k v]) (f v)
+
 

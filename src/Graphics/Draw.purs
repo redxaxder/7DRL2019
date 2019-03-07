@@ -16,9 +16,11 @@ import Graphics.Render
   , clear
   , setFillStyle
   )
-import Graphics.Sprite (Sprite, glitch, player, tileSprite)
+import Graphics.Sprite (glitch, player, tileSprite)
 import Tile (Tile)
-import Types (GameState, Item, UIRenderData(..), Mob)
+import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite, Mob)
+
+import Data.Item (itemSprite, itemName)
 
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
@@ -32,13 +34,19 @@ drawInventoryScreen :: Context -> Maybe { label:: Char, item :: Item } -> GameSt
 drawInventoryScreen ctx Nothing gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   drawText ctx "Inventory" 53.0 0.0
-  void $ flip traverseWithIndex items \ix (Tuple c {name}) ->
-    drawText ctx (singleton c <> ") " <> name) 53.0 (toNumber (tileDimensions.height * (ix + 1)))
+  void $ flip traverseWithIndex items \ix (Tuple c item) ->
+    drawText ctx 
+    (singleton c <> ") " <> un ItemName (itemName item))
+    53.0
+    (toNumber (tileDimensions.height * (ix + 1)))
 
 drawInventoryScreen ctx (Just {label, item}) gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   --clearRegion ctx { x: 53.0, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (length items + 1)}
-  drawText ctx item.name 53.0 0.0
+  drawText ctx 
+    (un ItemName $ itemName item)
+    53.0
+    0.0
 
 drawStartScreen :: Context -> Effect Unit
 drawStartScreen ctx = do
@@ -67,9 +75,9 @@ drawMain ctx gs = do
   spriteFromItem :: Item -> Sprite
   spriteFromItem _ = glitch
 
-  drawItem :: forall a. Position -> a -> Effect Unit
+  drawItem :: Position -> Item -> Effect Unit
   drawItem (Position { localPosition }) item =
-    drawSpriteToGrid ctx glitch (toCornerRelative localPosition)
+    drawSpriteToGrid ctx (itemSprite item) (toCornerRelative localPosition)
 
   visibleItems :: Array ({ item :: Item, screen :: Vector Int })
   visibleItems =
