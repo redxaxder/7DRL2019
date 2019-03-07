@@ -14,8 +14,7 @@ import Atlas (Atlas, Chart, LocalPosition, Position(..), addStitch, ChartId, mkC
 import Direction (Direction(..))
 import Direction as Dir
 import Random (Gen, Random, branch, runRandom', element)
-import Tile (Tile(..))
-import Types (GameState, MapGenHint, Placeholder, MapData)
+import Types (GameState, MapGenHint, Placeholder, MapData, Tile (..), Region (..))
 import Map.Data (staircase, startRoom, rooms)
 
 
@@ -61,7 +60,7 @@ rotate d = repeatedly (Dir.toInt d) rotateLeft
 initMap :: Gen -> { atlas :: Atlas Tile, player :: Position, placeholders :: Map Position Placeholder }
 initMap g =
   let { chart, exits } = flip runRandom' g $ load startRoom R
-      errorRoom = mkChart Wall [[Wall]]
+      errorRoom = mkChart (Wall Cave) [[Wall Cave]]
       atlasZero = mkAtlas errorRoom
       Tuple chartId atlas = addChart chart atlasZero
   in  { atlas
@@ -92,7 +91,7 @@ load {terrain} rotation = do
       entrance = case find (isEntrance <<< _.a) indexedMap of
         Nothing -> V { x:100, y:1000 } -- no entrance marker in template; just add one wherever
         Just {x,y} -> V { x, y }
-      chart = mkChart Wall tiles
+      chart = mkChart (Wall Cave) tiles
   generators <- traverse (\_ -> branch) protoExits
   let exits cid = zipWith (mkExit cid) protoExits (( \rng -> {rng}) <$> generators )
   pure { chart, exits, entrance }
@@ -109,23 +108,23 @@ addIndices arr = concat $ flip mapWithIndex arr \y row -> flip mapWithIndex row 
 
 getTile :: MapToken -> Tile
 getTile (T a) = a
-getTile _ = Empty
+getTile _ = Floor Cave
 
 toMapTokens :: Array String -> Array (Array MapToken)
 toMapTokens rows = (map getMapToken <<< toCharArray) <$> rows
 
 getMapToken :: Char -> MapToken
-getMapToken '#' = T Wall
+getMapToken '#' = T $ Wall Cave
 getMapToken '^' = Exit U
 getMapToken 'v' = Exit D
 getMapToken '<' = Exit L
 getMapToken '>' = Exit R
 getMapToken '!' = Entrance
-getMapToken _ =   T Empty
+getMapToken _ =   T $ Floor Cave
 
 defaultAtlas :: Atlas Tile
 defaultAtlas = mkAtlas defaultChart
 
 defaultChart :: Chart Tile
-defaultChart = mkChart Wall mempty
+defaultChart = mkChart (Wall Cave) mempty
   

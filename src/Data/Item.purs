@@ -1,18 +1,25 @@
-module Data.Item 
-  ( items
-  , itemName
-  , itemSprite
-  , itemsByName
-  , itemsByChar
-  )
-  where
+module Data.Item where
 
 import Extra.Prelude
 
 import Data.Map (Map)
 
-import Graphics.Sprite (spriteAt)
-import Types (Item (..), ItemName (..), Attribute (..), Sprite)
+import Data.Attribute (Attribute (..))
+import Data.Sprite (Sprite, spriteAt)
+
+newtype ItemName = ItemName String
+derive instance eqItemName :: Eq ItemName
+derive instance ordItemName :: Ord ItemName
+derive instance newtypeItemName :: Newtype ItemName _
+
+newtype Item = Item
+  { name :: ItemName
+  , char :: Maybe Char
+  , sprite :: Sprite
+  , attributes :: Array Attribute
+  }
+
+derive instance newtypeItem :: Newtype Item _
 
 i :: Char -> Int -> Int -> String -> Array String -> Item
 i c = mkItem (Just c)

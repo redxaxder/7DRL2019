@@ -4,9 +4,21 @@ import Extra.Prelude
 
 import Data.Map (Map)
 
-import Graphics.Sprite (spriteAt)
-import Types (Furniture (..), FurnitureName (..), Attribute (..), Sprite)
+import Data.Attribute (Attribute (..))
+import Data.Sprite (Sprite, spriteAt)
 
+newtype FurnitureName = FurnitureName String
+derive instance eqFurnitureName :: Eq FurnitureName
+derive instance ordFurnitureName :: Ord FurnitureName
+derive instance newtypeFurnitureName :: Newtype FurnitureName _
+
+newtype Furniture = Furniture
+  { name :: FurnitureName
+  , char :: Char
+  , sprite :: Sprite
+  , attributes :: Array Attribute
+  }
+derive instance newtypeFurniture :: Newtype Furniture _
 
 f :: Char -> Int -> Int -> String -> Array String -> Furniture
 f char x y name attributes = Furniture

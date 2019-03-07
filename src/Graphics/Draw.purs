@@ -16,8 +16,8 @@ import Graphics.Render
   , clear
   , setFillStyle
   )
-import Graphics.Sprite (glitch, player, tileSprite)
-import Tile (Tile)
+import Data.Sprite (glitch, player)
+import Data.Tile (Tile, tileSprite)
 import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite)
 
 import Data.Item (itemSprite, itemName)
