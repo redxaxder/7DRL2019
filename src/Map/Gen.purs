@@ -80,7 +80,7 @@ load
 load mapData region rotation = do
   let mapTokens = rotate rotation $ toMapTokens region (getTerrain mapData)
       indexedMap = addIndices mapTokens
-      tiles = (map <<< map) getTile mapTokens
+      tiles = (map <<< map) (getTile region) mapTokens
       protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
                      case a of
                           Exit dir -> Just { localPosition: V {x,y}, dir }
@@ -108,9 +108,9 @@ addIndices :: forall a. Array (Array a) -> Array { x :: Int, y :: Int, a :: a }
 addIndices arr = concat $ flip mapWithIndex arr \y row -> flip mapWithIndex row \x a ->
   { x, y, a }
 
-getTile :: MapToken -> Tile
-getTile (T a) = a
-getTile _ = Floor Cave
+getTile :: Region -> MapToken -> Tile
+getTile _ (T a) = a
+getTile r _ = Floor r
 
 toMapTokens :: Region -> Array String -> Array (Array MapToken)
 toMapTokens r rows = (map (getMapToken r) <<< toCharArray) <$> rows
