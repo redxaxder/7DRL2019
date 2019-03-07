@@ -2,26 +2,26 @@ module Main where
 
 import Extra.Prelude
 
+import Atlas (getElement, move)
+import Combat (CombatEntity(..), doAttack)
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Data.Enum (enumFromTo)
 import Data.Map (delete)
 import Data.Map as Map
-import Data.Set as Set 
+import Data.Set as Set
+import Data.Tile (blocksMovement)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
-import Partial.Unsafe (unsafePartial)
-
-import Atlas (getElement, move)
-import FOV (visibleTiles)
 import Init (init)
 import Intent (Action(..))
-import Data.Tile (blocksMovement)
-import Types (GameState)
 import Map.Gen (expandMap)
+import Partial.Unsafe (unsafePartial)
+import Types (GameState)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -72,9 +72,11 @@ handleAction :: GameState -> Action -> Maybe GameState
 handleAction gs (Move dir) =
   let player = move dir gs.atlas gs.player
       atlas = gs.atlas
-   in if blocksMovement (getElement player atlas)
-        then Nothing
-        else Just $ gs { player = player, atlas = atlas }
+   in case Map.lookup player gs.mobs of
+        Nothing -> if blocksMovement (getElement player atlas)
+                      then Nothing
+                      else Just $ gs { player = player, atlas = atlas }
+        Just a -> Just $ doAttack gs Player (Monster a)
 handleAction gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }

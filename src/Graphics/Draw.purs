@@ -2,26 +2,18 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
-import Data.Array (catMaybes)
-import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable, lookup)
-import Data.String.CodeUnits (singleton)
-
 import Atlas (Position(..))
 import Constants (displayDimensions, tileDimensions, white)
-import Graphics.Render
-  ( Context
-  , drawSpriteToGrid
-  , drawText
-  , clear
-  , setFillStyle
-  )
-import Data.Sprite (glitch, player)
-import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite)
-
+import Data.Array (catMaybes)
+import Data.Array.NonEmpty as NE
 import Data.Item (itemSprite, itemName)
-import Data.Mob (Mob)
+import Data.Map (toUnfoldable, lookup)
+import Data.Mob (Mob, mobSprite)
+import Data.Sprite (glitch, player)
+import Data.String.CodeUnits (singleton)
+import Data.Tile (Tile, tileSprite)
+import Graphics.Render (Context, drawSpriteToGrid, drawText, clear, setFillStyle)
+import Types (GameState, Item, ItemName(..), UIRenderData(..), Sprite)
 
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
@@ -36,7 +28,7 @@ drawInventoryScreen ctx Nothing gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   drawText ctx "Inventory" 53.0 0.0
   void $ flip traverseWithIndex items \ix (Tuple c item) ->
-    drawText ctx 
+    drawText ctx
     (singleton c <> ") " <> un ItemName (itemName item))
     53.0
     (toNumber (tileDimensions.height * (ix + 1)))
@@ -44,7 +36,7 @@ drawInventoryScreen ctx Nothing gs = do
 drawInventoryScreen ctx (Just {label, item}) gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   --clearRegion ctx { x: 53.0, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (length items + 1)}
-  drawText ctx 
+  drawText ctx
     (un ItemName $ itemName item)
     53.0
     0.0
@@ -62,8 +54,9 @@ drawMain ctx gs = do
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
   visibleItems # traverse_ \{ item, screen } ->
     drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
---  visibleMobs # traverse_ \{ mob, screen } ->
---    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
+  visibleMobs # traverse_ \{ mob, screen } ->
+    -- drawSpriteToGrid ctx ( _.screen mob ) (toCornerRelative screen)
+    drawSpriteToGrid ctx (spriteFromMob mob ) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
   pure unit
   where
@@ -75,6 +68,9 @@ drawMain ctx gs = do
 
   spriteFromItem :: Item -> Sprite
   spriteFromItem _ = glitch
+
+  spriteFromMob :: Mob -> Sprite
+  spriteFromMob a = mobSprite a
 
   drawItem :: Position -> Item -> Effect Unit
   drawItem (Position { localPosition }) item =

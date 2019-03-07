@@ -2,8 +2,8 @@ module Data.Mob
        ( mobs
        , mobName
        , mobSprite
-       , Mob
-       , MobName
+       , Mob(..)
+       , MobName(..)
        )
        where
 
@@ -18,7 +18,7 @@ derive instance newtypeMobName :: Newtype MobName _
 newtype Mob = Mob
   { name :: MobName
   , sprite :: Sprite
-  }  
+  }
 derive instance newtypeMob :: Newtype Mob _
 
 m :: Int -> Int -> String -> Mob

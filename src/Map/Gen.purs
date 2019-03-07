@@ -19,9 +19,9 @@ import Map.Data (staircase, startRoom, rooms)
 
 
 expandMap :: GameState -> Maybe GameState
-expandMap gs = if length visiblePlaceholders == 0 
+expandMap gs = if length visiblePlaceholders == 0
   then Nothing
-  else Just $ 
+  else Just $
     let { atlas, toAdd } = tailRec go { atlas: gs.atlas, visible: visiblePlaceholders, toAdd: mempty }
         placeholders' = foldr Map.delete gs.placeholders (map _.position visiblePlaceholders)
                      <> (Map.fromFoldable $ map (\p -> Tuple p.position p) toAdd)
@@ -35,12 +35,12 @@ expandMap gs = if length visiblePlaceholders == 0
      -> Step { atlas :: Atlas Tile, visible :: Array Placeholder, toAdd :: Array Placeholder } { atlas :: Atlas Tile, toAdd :: Array Placeholder }
   go { atlas, visible, toAdd } = case uncons visible of
     Nothing -> Done { atlas, toAdd }
-    Just { head, tail } -> let { atlas: atlas', placeholders } = genMapPiece head atlas 
+    Just { head, tail } -> let { atlas: atlas', placeholders } = genMapPiece head atlas
                            in Loop { atlas: atlas', visible: tail, toAdd: toAdd <> placeholders }
 
 genMapPiece :: Placeholder -> Atlas Tile -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }
-genMapPiece p@{ position, direction, next: {rng} } atlas = 
-  let { chart, exits, entrance } = flip runRandom' rng $ do 
+genMapPiece p@{ position, direction, next: {rng} } atlas =
+  let { chart, exits, entrance } = flip runRandom' rng $ do
         room <- element rooms
         load room direction
       (Tuple chartId atlas') = addChart chart atlas
@@ -83,7 +83,7 @@ load {terrain} rotation = do
                      case a of
                           Exit dir -> Just { localPosition: V {x,y}, dir }
                           _ -> Nothing
-      mkExit chartId { dir, localPosition } next = 
+      mkExit chartId { dir, localPosition } next =
         { direction: Dir.add dir rotation
         , position: Position { chartId, localPosition}
         , next
@@ -127,4 +127,3 @@ defaultAtlas = mkAtlas defaultChart
 
 defaultChart :: Chart Tile
 defaultChart = mkChart (Wall Cave) mempty
-  
