@@ -15,11 +15,12 @@ import Direction (Direction(..))
 import Direction as Dir
 import Random (Gen, Random, branch, runRandom', element)
 import Types (GameState, MapGenHint, Placeholder, MapData, Tile (..), Region (..))
-import Map.Data (staircase, startRoom, rooms)
+import Data.Maps (startRoom, roomsByRegion, getTerrain)
 
+import Partial.Unsafe (unsafePartial) --FIXME
 
 expandMap :: GameState -> Maybe GameState
-expandMap gs = if length visiblePlaceholders == 0 
+expandMap gs = if length visiblePlaceholders == 0
   then Nothing
   else Just $ 
     let { atlas, toAdd } = tailRec go { atlas: gs.atlas, visible: visiblePlaceholders, toAdd: mempty }
@@ -39,9 +40,9 @@ expandMap gs = if length visiblePlaceholders == 0
                            in Loop { atlas: atlas', visible: tail, toAdd: toAdd <> placeholders }
 
 genMapPiece :: Placeholder -> Atlas Tile -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }
-genMapPiece p@{ position, direction, next: {rng} } atlas = 
-  let { chart, exits, entrance } = flip runRandom' rng $ do 
-        room <- element rooms
+genMapPiece p@{ position, direction, next: {rng} } atlas =
+  let { chart, exits, entrance } = flip runRandom' rng $ do
+        room <- unsafePartial $ element $ fromJust $ Map.lookup Cave roomsByRegion
         load room direction
       (Tuple chartId atlas') = addChart chart atlas
       entrancePosition = Position { chartId, localPosition: entrance }
@@ -75,8 +76,8 @@ load
      , exits :: ChartId -> Array Placeholder
      , entrance :: LocalPosition
      }
-load {terrain} rotation = do
-  let mapTokens = rotate rotation $ toMapTokens terrain
+load mapData rotation = do
+  let mapTokens = rotate rotation $ toMapTokens (getTerrain mapData)
       indexedMap = addIndices mapTokens
       tiles = (map <<< map) getTile mapTokens
       protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
