@@ -43,6 +43,6 @@ exampleMobs :: Map Position Mob
 exampleMobs = fromFoldable
   [ Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}} |> case head mobs of
                                                                         Just a -> a
-                                                                        Nothing -> Mob { name: MobName "Broken", sprite: spriteAt 4 3 }
+                                                                        Nothing -> Mob { name: MobName "Broken", sprite: spriteAt 4 3, hp: 1 }
   ]
 --}

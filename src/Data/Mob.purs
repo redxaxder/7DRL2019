@@ -18,25 +18,27 @@ derive instance newtypeMobName :: Newtype MobName _
 newtype Mob = Mob
   { name :: MobName
   , sprite :: Sprite
+  , hp :: Int
   }
 derive instance newtypeMob :: Newtype Mob _
 
-m :: Int -> Int -> String -> Mob
+m :: Int -> Int -> String -> Int -> Mob
 m = mkMob
 
-mkMob :: Int -> Int -> String -> Mob
-mkMob x y name = Mob
+mkMob :: Int -> Int -> String -> Int -> Mob
+mkMob x y name hp = Mob
   { name: MobName name
   , sprite: spriteAt x y
+  , hp: hp
   }
 
 mobs :: Array Mob
 mobs =
-  [ m 0 1 "Bananamatronic Husk"
-  , m 5 0 "Monion"
-  , m 6 0 "Tomatosaurus"
-  , m 7 0 "Meatotaur"
-  , m 1 1 "Deep Lettuce"
+  [ m 0 1 "Bananamatronic Husk" 5
+  , m 5 0 "Monion"              5
+  , m 6 0 "Tomatosaurus"        5
+  , m 7 0 "Meatotaur"           5
+  , m 1 1 "Deep Lettuce"        5
   ]
 
 mobName :: Mob -> MobName
