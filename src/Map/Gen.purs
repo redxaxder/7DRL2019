@@ -43,7 +43,7 @@ genMapPiece :: Placeholder -> Atlas Tile -> { atlas :: Atlas Tile, placeholders 
 genMapPiece p@{ position, direction, next: {rng} } atlas =
   let { chart, exits, entrance } = flip runRandom' rng $ do
         room <- unsafePartial $ element $ fromJust $ Map.lookup Cave roomsByRegion
-        load room direction
+        load room Cave direction
       (Tuple chartId atlas') = addChart chart atlas
       entrancePosition = Position { chartId, localPosition: entrance }
       placeholders = exits chartId
@@ -60,7 +60,7 @@ rotate d = repeatedly (Dir.toInt d) rotateLeft
 
 initMap :: Gen -> { atlas :: Atlas Tile, player :: Position, placeholders :: Map Position Placeholder }
 initMap g =
-  let { chart, exits } = flip runRandom' g $ load startRoom R
+  let { chart, exits } = flip runRandom' g $ load startRoom Kitchen R
       errorRoom = mkChart (Wall Cave) [[Wall Cave]]
       atlasZero = mkAtlas errorRoom
       Tuple chartId atlas = addChart chart atlasZero
@@ -71,13 +71,14 @@ initMap g =
 
 load
   :: MapData
+  -> Region
   -> Direction
   -> Random { chart :: Chart Tile
      , exits :: ChartId -> Array Placeholder
      , entrance :: LocalPosition
      }
-load mapData rotation = do
-  let mapTokens = rotate rotation $ toMapTokens (getTerrain mapData)
+load mapData region rotation = do
+  let mapTokens = rotate rotation $ toMapTokens region (getTerrain mapData)
       indexedMap = addIndices mapTokens
       tiles = (map <<< map) getTile mapTokens
       protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
@@ -111,17 +112,17 @@ getTile :: MapToken -> Tile
 getTile (T a) = a
 getTile _ = Floor Cave
 
-toMapTokens :: Array String -> Array (Array MapToken)
-toMapTokens rows = (map getMapToken <<< toCharArray) <$> rows
+toMapTokens :: Region -> Array String -> Array (Array MapToken)
+toMapTokens r rows = (map (getMapToken r) <<< toCharArray) <$> rows
 
-getMapToken :: Char -> MapToken
-getMapToken '#' = T $ Wall Cave
-getMapToken '^' = Exit U
-getMapToken 'v' = Exit D
-getMapToken '<' = Exit L
-getMapToken '>' = Exit R
-getMapToken '!' = Entrance
-getMapToken _ =   T $ Floor Cave
+getMapToken :: Region -> Char -> MapToken
+getMapToken r '#'= T $ Wall r
+getMapToken _ '^'= Exit U
+getMapToken _ 'v'= Exit D
+getMapToken _ '<'= Exit L
+getMapToken _ '>'= Exit R
+getMapToken _ '!'= Entrance
+getMapToken r _  = T $ Floor r
 
 defaultAtlas :: Atlas Tile
 defaultAtlas = mkAtlas defaultChart
