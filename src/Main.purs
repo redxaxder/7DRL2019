@@ -76,7 +76,7 @@ handleAction gs (Move dir) =
         Nothing -> if blocksMovement (getElement player atlas)
                       then Nothing
                       else Just $ gs { player = player, atlas = atlas }
-        Just a -> Just $ doAttack gs Player (Monster a)
+        Just a -> Just $ doAttack gs Player player
 handleAction gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }
