@@ -2,7 +2,6 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
-import Data.Array (catMaybes)
 import Data.Array.NonEmpty as NE
 import Data.Map (Map, toUnfoldable, lookup)
 import Data.String.CodeUnits (singleton)
@@ -19,7 +18,8 @@ import Graphics.Render
 import Data.Sprite (glitch, player)
 import Data.Furniture (furnitureSprite)
 import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite, Furniture)
+import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite, Furniture,
+  getVisible)
 
 import Data.Item (itemSprite, itemName)
 import Data.Mob (Mob)
@@ -61,11 +61,11 @@ drawMain ctx gs = do
   clear ctx
   gs.fov # traverse_ \{ screen, tiles } ->
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
-  getVisible gs.furniture # traverse_ \{ a, screen } ->
+  getVisible gs.fov gs.furniture # traverse_ \{ a, screen } ->
     drawSpriteToGrid ctx (furnitureSprite a) (toCornerRelative screen)
-  getVisible gs.items # traverse_ \{ a, screen } ->
+  getVisible gs.fov gs.items # traverse_ \{ a, screen } ->
     drawSpriteToGrid ctx (spriteFromItem a) (toCornerRelative screen)
---  getVisible gs.mobs # traverse_ \{ a: mob, screen } ->
+--  getVisible gs.fov gs.mobs # traverse_ \{ a: mob, screen } ->
 --    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
   pure unit
@@ -82,11 +82,6 @@ drawMain ctx gs = do
   drawItem :: Position -> Item -> Effect Unit
   drawItem (Position { localPosition }) item =
     drawSpriteToGrid ctx (itemSprite item) (toCornerRelative localPosition)
-
-  getVisible :: forall a. Map Position a -> Array { a :: a, screen :: Vector Int }
-  getVisible m = catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
-      map (\a -> { a, screen }) $ lookup absolute m
-
   toCornerRelative :: Vector Int -> Vector Int
   toCornerRelative (V {x,y}) = V { x: x', y: y' }
     where

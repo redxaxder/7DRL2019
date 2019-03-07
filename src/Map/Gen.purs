@@ -2,7 +2,7 @@ module Map.Gen where
 
 import Extra.Prelude
 
-import Data.Array (uncons, catMaybes)
+import Data.Array (uncons)
 import Data.Map (Map)
 import Data.Map as Map
 import Control.Monad.Rec.Class (Step (..), tailRec)
@@ -11,33 +11,57 @@ import Partial.Unsafe (unsafePartial) --FIXME
 import Atlas (Atlas, Chart, Position(..), addStitch, mkChart, addChart, mkAtlas)
 import Direction (Direction(..))
 import Random (Gen, runRandom', element)
-import Types (GameState, Placeholder, Tile (..), Region (..), Furniture)
+import Types (GameState, Placeholder, Tile (..), Region (..), Furniture, getVisible)
 import Data.Maps (startRoom, roomsByRegion)
 import Map.Load (load)
 
 
+type ExpandPartial = { atlas :: Atlas Tile
+                     , visible :: Array Placeholder
+                     , toAdd :: Array Placeholder
+                     , furniture :: Map Position Furniture
+                     }
+
+type ExpandResult = { atlas :: Atlas Tile
+                    , toAdd :: Array Placeholder
+                    , furniture :: Map Position Furniture
+                    }
+
 expandMap :: GameState -> Maybe GameState
 expandMap gs = if length visiblePlaceholders == 0
   then Nothing
-  else Just $ 
-    let { atlas, toAdd } = tailRec go { atlas: gs.atlas, visible: visiblePlaceholders, toAdd: mempty }
+  else Just $
+    let { atlas, toAdd, furniture } = tailRec go
+          { atlas: gs.atlas
+          , visible: visiblePlaceholders
+          , toAdd: mempty
+          , furniture: mempty
+          }
         placeholders' = foldr Map.delete gs.placeholders (map _.position visiblePlaceholders)
                      <> (Map.fromFoldable $ map (\p -> Tuple p.position p) toAdd)
-     in gs { atlas = atlas, placeholders = placeholders' }
+     in gs { atlas = atlas
+           , placeholders = placeholders'
+           , furniture = gs.furniture <> furniture
+           }
   where
   visiblePlaceholders :: Array Placeholder
-  visiblePlaceholders =
-      catMaybes $ flip map gs.fov $ \{ absolute } -> Map.lookup absolute gs.placeholders
+  visiblePlaceholders = _.a <$> getVisible gs.fov gs.placeholders
 
-  go :: { atlas :: Atlas Tile, visible :: Array Placeholder, toAdd :: Array Placeholder }
-     -> Step { atlas :: Atlas Tile, visible :: Array Placeholder, toAdd :: Array Placeholder } { atlas :: Atlas Tile, toAdd :: Array Placeholder }
-  go { atlas, visible, toAdd } = case uncons visible of
-    Nothing -> Done { atlas, toAdd }
-    Just { head, tail } -> let { atlas: atlas', placeholders } = genMapPiece head atlas 
-                           in Loop { atlas: atlas', visible: tail, toAdd: toAdd <> placeholders }
+  go :: ExpandPartial -> Step ExpandPartial ExpandResult
+  go { atlas, visible, toAdd, furniture } = case uncons visible of
+    Nothing -> Done { atlas, toAdd, furniture }
+    Just { head, tail } ->
+      let { atlas: atlas', placeholders, furniture: f' } = genMapPiece head atlas 
+       in Loop { atlas: atlas'
+               , visible: tail
+               , toAdd: toAdd <> placeholders
+               , furniture: furniture <> f'
+               }
 
 genMapPiece :: Placeholder -> Atlas Tile
-  -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }
+  -> { atlas :: Atlas Tile
+     , placeholders :: Array Placeholder
+     , furniture :: Map Position Furniture }
 genMapPiece p@{ position, direction, next: {rng} } atlas =
   let { chart, exits, entrance, furniture } = flip runRandom' rng $ do
         room <- unsafePartial $ element $ fromJust $ Map.lookup Cave roomsByRegion
@@ -46,7 +70,7 @@ genMapPiece p@{ position, direction, next: {rng} } atlas =
       entrancePosition = Position { chartId, localPosition: entrance }
       placeholders = exits chartId
       atlas'' = addStitch position direction entrancePosition atlas'
-   in { atlas: atlas'', placeholders} --TODO: add furniture here
+   in { atlas: atlas'', placeholders, furniture: furniture chartId}
 
 initMap :: Gen
   -> { atlas :: Atlas Tile

@@ -14,6 +14,8 @@ module Types
 import Extra.Prelude
 
 import Data.Map (Map)
+import Data.Map as Map
+import Data.Array (catMaybes)
 
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
@@ -37,6 +39,11 @@ type GameState =
  , mobs :: Map Position Mob
  , furniture :: Map Position Furniture
  }
+
+-- TODO: where should this live?
+getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen :: Vector Int }
+getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
+      map (\a -> { a, screen }) $ Map.lookup absolute m
 
 data UIRenderData = MainGame
   | StartScreen
