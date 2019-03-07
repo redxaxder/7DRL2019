@@ -21,6 +21,7 @@ import Data.Tile (Tile, tileSprite)
 import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite)
 
 import Data.Item (itemSprite, itemName)
+import Data.Mob (Mob)
 
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
@@ -61,6 +62,8 @@ drawMain ctx gs = do
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
   visibleItems # traverse_ \{ item, screen } ->
     drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
+--  visibleMobs # traverse_ \{ mob, screen } ->
+--    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
   pure unit
   where
@@ -81,6 +84,11 @@ drawMain ctx gs = do
   visibleItems =
     catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
       map (\item -> { item, screen }) $ lookup absolute gs.items
+
+  visibleMobs :: Array ({ mob :: Mob, screen :: Vector Int })
+  visibleMobs =
+    catMaybes $ flip map gs.fov $ \{ screen, absolute } ->
+      map (\mob -> { mob, screen}) $ lookup absolute gs.mobs
 
   toCornerRelative :: Vector Int -> Vector Int
   toCornerRelative (V {x,y}) = V { x: x', y: y' }

@@ -5,6 +5,7 @@ import Extra.Prelude
 import Types (GameState)
 import Map.Gen (initMap)
 import Random (newGen)
+import Types (GameState, Item)
 
 init :: Effect GameState
 init = do
@@ -16,6 +17,7 @@ init = do
        , items: mempty --exampleItems
        , placeholders
        , fov: mempty
+       , mobs: mempty --exampleMobs
        }
 
 {-
@@ -29,6 +31,12 @@ exampleInventory = todo fromFoldable
 
 exampleItems :: Map Position Item
 exampleItems = fromFoldable
-  [  Position {chartId: ChartId 0, localPosition: V {x: 1, y: 1}} |> { name: "Zapple" }
+  [  Position {chartId: ChartId 0, localPosition: V {x: 3, y: 1}} |> { name: "Zapple" }
+  ]
+
+exampleMobs :: Map Position Mob
+exampleMobs = fromFoldable 
+  [ Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}} |> { name: "Bananamatronic Husk", gfx: bananamatronicHusk }
+
   ]
 -}

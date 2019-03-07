@@ -17,6 +17,7 @@ import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
 import Data.Furniture (Furniture (..), FurnitureName (..))
 import Data.Item (Item (..), ItemName (..))
+import Data.Mob (Mob (..), MobName (..))
 import Data.Region (Region (..))
 import Data.Sprite (Sprite (..))
 import Data.Tile (Tile (..))
@@ -30,6 +31,7 @@ type GameState =
  , items :: Map Position Item
  , placeholders :: Map Position Placeholder
  , fov :: FieldOfView
+ , mobs :: Map Position Mob
  }
 
 data UIRenderData = MainGame
