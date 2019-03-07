@@ -15,11 +15,12 @@ import Direction (Direction(..))
 import Direction as Dir
 import Random (Gen, Random, branch, runRandom', element)
 import Types (GameState, MapGenHint, Placeholder, MapData, Tile (..), Region (..))
-import Map.Data (staircase, startRoom, rooms)
+import Data.Maps (startRoom, roomsByRegion, getTerrain)
 
+import Partial.Unsafe (unsafePartial) --FIXME
 
 expandMap :: GameState -> Maybe GameState
-expandMap gs = if length visiblePlaceholders == 0 
+expandMap gs = if length visiblePlaceholders == 0
   then Nothing
   else Just $ 
     let { atlas, toAdd } = tailRec go { atlas: gs.atlas, visible: visiblePlaceholders, toAdd: mempty }
@@ -39,10 +40,10 @@ expandMap gs = if length visiblePlaceholders == 0
                            in Loop { atlas: atlas', visible: tail, toAdd: toAdd <> placeholders }
 
 genMapPiece :: Placeholder -> Atlas Tile -> { atlas :: Atlas Tile, placeholders :: Array Placeholder }
-genMapPiece p@{ position, direction, next: {rng} } atlas = 
-  let { chart, exits, entrance } = flip runRandom' rng $ do 
-        room <- element rooms
-        load room direction
+genMapPiece p@{ position, direction, next: {rng} } atlas =
+  let { chart, exits, entrance } = flip runRandom' rng $ do
+        room <- unsafePartial $ element $ fromJust $ Map.lookup Cave roomsByRegion
+        load room Cave direction
       (Tuple chartId atlas') = addChart chart atlas
       entrancePosition = Position { chartId, localPosition: entrance }
       placeholders = exits chartId
@@ -59,7 +60,7 @@ rotate d = repeatedly (Dir.toInt d) rotateLeft
 
 initMap :: Gen -> { atlas :: Atlas Tile, player :: Position, placeholders :: Map Position Placeholder }
 initMap g =
-  let { chart, exits } = flip runRandom' g $ load startRoom R
+  let { chart, exits } = flip runRandom' g $ load startRoom Kitchen R
       errorRoom = mkChart (Wall Cave) [[Wall Cave]]
       atlasZero = mkAtlas errorRoom
       Tuple chartId atlas = addChart chart atlasZero
@@ -70,15 +71,16 @@ initMap g =
 
 load
   :: MapData
+  -> Region
   -> Direction
   -> Random { chart :: Chart Tile
      , exits :: ChartId -> Array Placeholder
      , entrance :: LocalPosition
      }
-load {terrain} rotation = do
-  let mapTokens = rotate rotation $ toMapTokens terrain
+load mapData region rotation = do
+  let mapTokens = rotate rotation $ toMapTokens region (getTerrain mapData)
       indexedMap = addIndices mapTokens
-      tiles = (map <<< map) getTile mapTokens
+      tiles = (map <<< map) (getTile region) mapTokens
       protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
                      case a of
                           Exit dir -> Just { localPosition: V {x,y}, dir }
@@ -106,21 +108,21 @@ addIndices :: forall a. Array (Array a) -> Array { x :: Int, y :: Int, a :: a }
 addIndices arr = concat $ flip mapWithIndex arr \y row -> flip mapWithIndex row \x a ->
   { x, y, a }
 
-getTile :: MapToken -> Tile
-getTile (T a) = a
-getTile _ = Floor Cave
+getTile :: Region -> MapToken -> Tile
+getTile _ (T a) = a
+getTile r _ = Floor r
 
-toMapTokens :: Array String -> Array (Array MapToken)
-toMapTokens rows = (map getMapToken <<< toCharArray) <$> rows
+toMapTokens :: Region -> Array String -> Array (Array MapToken)
+toMapTokens r rows = (map (getMapToken r) <<< toCharArray) <$> rows
 
-getMapToken :: Char -> MapToken
-getMapToken '#' = T $ Wall Cave
-getMapToken '^' = Exit U
-getMapToken 'v' = Exit D
-getMapToken '<' = Exit L
-getMapToken '>' = Exit R
-getMapToken '!' = Entrance
-getMapToken _ =   T $ Floor Cave
+getMapToken :: Region -> Char -> MapToken
+getMapToken r '#'= T $ Wall r
+getMapToken _ '^'= Exit U
+getMapToken _ 'v'= Exit D
+getMapToken _ '<'= Exit L
+getMapToken _ '>'= Exit R
+getMapToken _ '!'= Entrance
+getMapToken r _  = T $ Floor r
 
 defaultAtlas :: Atlas Tile
 defaultAtlas = mkAtlas defaultChart

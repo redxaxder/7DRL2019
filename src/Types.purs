@@ -5,6 +5,8 @@ module Types
   , module Data.Item
   , module Data.Region
   , module Data.Sprite
+  , module Data.Maps
+  , module Data.Mob
   , module Data.Tile
   )
   where
@@ -17,6 +19,7 @@ import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
 import Data.Furniture (Furniture (..), FurnitureName (..))
 import Data.Item (Item (..), ItemName (..))
+import Data.Maps (MapData (..))
 import Data.Mob (Mob (..), MobName (..))
 import Data.Region (Region (..))
 import Data.Sprite (Sprite (..))
@@ -38,12 +41,8 @@ data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
 
---type Item = { name :: String }
-
 type MapGenHint = { rng :: Gen }
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
-
-type MapData = { terrain :: Array String }

@@ -36,7 +36,7 @@ import Control.Monad.Rec.Class (Step (..), tailRec)
 import Data.Array (groupBy, sortBy, zip)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
-import Data.Foldable (class Foldable, null, length, foldr, foldl, sum)
+import Data.Foldable (class Foldable, null, length, elem, foldr, foldl, sum)
 import Data.Map (Map, alter, empty)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)
