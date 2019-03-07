@@ -2,7 +2,7 @@ module Graphics.Sprite where
 
 import Tile (Tile (..))
 
-newtype Sprite = Sprite { offsetX :: Int, offsetY :: Int }
+import Types (Sprite (..))
 
 spriteAt :: Int -> Int -> Sprite
 spriteAt offsetX offsetY = Sprite { offsetX, offsetY }

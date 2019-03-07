@@ -7,7 +7,7 @@ rooms :: Array MapData
 rooms = [ sampleMap1, sampleMap2, sampleHall1, sampleHall2, staircase ]
 
 startRoom :: MapData
-startRoom = 
+startRoom =
   { terrain:
       [ "##########"
       , "#......#^#"

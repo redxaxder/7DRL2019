@@ -22,7 +22,7 @@ data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
 
-type Item = { name :: String }
+--type Item = { name :: String }
 
 type MapGenHint = { rng :: Gen }
 
@@ -31,3 +31,36 @@ type Placeholder = { position :: Position, direction :: Direction, next :: MapGe
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
 
 type MapData = { terrain :: Array String }
+
+
+newtype Sprite = Sprite { offsetX :: Int, offsetY :: Int }
+
+newtype Attribute = Attribute String
+derive instance eqAttribute :: Eq Attribute
+
+newtype ItemName = ItemName String
+derive instance eqItemName :: Eq ItemName
+derive instance ordItemName :: Ord ItemName
+derive instance newtypeItemName :: Newtype ItemName _
+
+newtype Item = Item
+  { name :: ItemName
+  , char :: Maybe Char
+  , sprite :: Sprite
+  , attributes :: Array Attribute
+  }
+
+derive instance newtypeItem :: Newtype Item _
+
+newtype FurnitureName = FurnitureName String
+derive instance eqFurnitureName :: Eq FurnitureName
+derive instance ordFurnitureName :: Ord FurnitureName
+derive instance newtypeFurnitureName :: Newtype FurnitureName _
+
+newtype Furniture = Furniture
+  { name :: FurnitureName
+  , char :: Char
+  , sprite :: Sprite
+  , attributes :: Array Attribute
+  }
+derive instance newtypeFurniture :: Newtype Furniture _
