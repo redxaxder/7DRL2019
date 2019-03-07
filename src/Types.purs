@@ -65,4 +65,12 @@ newtype Furniture = Furniture
   }
 derive instance newtypeFurniture :: Newtype Furniture _
 
-type Mob = { name :: String, gfx :: Sprite } 
+newtype MobName = MobName String
+derive instance eqMobName :: Eq MobName
+derive instance ordMobName :: Ord MobName
+derive instance newtypeMobName :: Newtype MobName _
+newtype Mob = Mob
+  { name :: MobName
+  , sprite :: Sprite
+  }  
+derive instance newtypeMob :: Newtype Mob _

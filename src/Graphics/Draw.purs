@@ -61,8 +61,8 @@ drawMain ctx gs = do
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
   visibleItems # traverse_ \{ item, screen } ->
     drawSpriteToGrid ctx (spriteFromItem item) (toCornerRelative screen)
-  visibleMobs # traverse_ \{ mob, screen } ->
-    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
+--  visibleMobs # traverse_ \{ mob, screen } ->
+--    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
   pure unit
   where
