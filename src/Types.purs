@@ -3,10 +3,10 @@ module Types
   , module Data.Attribute
   , module Types.Furniture
   , module Types.Item
+  , module Types.Mob
   , module Data.Region
   , module Data.Sprite
   , module Data.Maps
-  , module Data.Mob
   , module Data.Tile
   )
   where
@@ -19,15 +19,15 @@ import Data.Array (catMaybes)
 
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
-import Types.Furniture (FurnitureType, Furniture (..))
-import Types.Item (Item (..), ItemType)
 import Data.Maps (MapData (..))
-import Data.Mob (Mob (..), MobName (..))
 import Data.Region (Region (..))
 import Data.Sprite (Sprite (..))
 import Data.Tile (Tile (..))
 import Direction (Direction)
 import Random (Gen)
+import Types.Furniture (FurnitureType, Furniture (..))
+import Types.Item (Item (..), ItemType)
+import Types.Mob (Mob (..), MobType)
 
 type GameState =
  { player :: Position

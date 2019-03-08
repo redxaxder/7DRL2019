@@ -1,39 +1,42 @@
 module Data.Mob
-       ( mobs
-       , mobName
-       , mobSprite
-       , Mob(..)
-       , MobName(..)
+       ( MobType
+       , mobs
+       , getMobRecord
        )
        where
 
 import Extra.Prelude
 
+import Data.Map (Map)
+import Data.Map as Map
+
 import Data.Sprite (Sprite, spriteAt)
 
-newtype MobName = MobName String
-derive instance eqMobName :: Eq MobName
-derive instance ordMobName :: Ord MobName
-derive instance newtypeMobName :: Newtype MobName _
-newtype Mob = Mob
-  { name :: MobName
+newtype MobType = MobType String
+derive instance eqMobType :: Eq MobType
+derive instance ordMobType :: Ord MobType
+
+type MobRecord =
+  { mobType :: MobType
+  , name :: String
   , sprite :: Sprite
   , hp :: Int
+  --, attributes :: Array Attribute
   }
-derive instance newtypeMob :: Newtype Mob _
 
-m :: Int -> Int -> String -> Int -> Mob
+m :: Int -> Int -> String -> Int -> MobRecord
 m = mkMob
 
-mkMob :: Int -> Int -> String -> Int -> Mob
-mkMob x y name hp = Mob
-  { name: MobName name
+mkMob :: Int -> Int -> String -> Int -> MobRecord
+mkMob x y name hp =
+  { mobType: MobType name
+  , name
   , sprite: spriteAt x y
   , hp: hp
   }
 
-mobs :: Array Mob
-mobs =
+mobRecords :: Array MobRecord
+mobRecords =
   [ m 0 1 "Bananamatronic Husk" 5
   , m 5 0 "Monion"              5
   , m 6 0 "Tomatosaurus"        5
@@ -41,8 +44,12 @@ mobs =
   , m 1 1 "Deep Lettuce"        5
   ]
 
-mobName :: Mob -> MobName
-mobName = _.name <<< un Mob
+mobs :: Array MobType
+mobs = _.mobType <$> mobRecords
 
-mobSprite :: Mob -> Sprite
-mobSprite = _.sprite <<< un Mob
+mobMap :: Map MobType MobRecord
+mobMap = keyBy _.mobType mobRecords
+
+getMobRecord :: MobType -> MobRecord
+getMobRecord t = unsafeFromJust $ Map.lookup t mobMap
+  -- this is safe as long as MobType is only ever constructed within mobRecords

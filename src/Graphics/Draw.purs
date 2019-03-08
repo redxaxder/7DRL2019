@@ -5,7 +5,7 @@ import Extra.Prelude
 import Constants (displayDimensions, tileDimensions, white)
 import Data.Array.NonEmpty as NE
 import Data.Map (toUnfoldable)
-import Data.Mob (mobSprite)
+import Types.Mob (mobSprite)
 import Data.Sprite (glitch, player)
 import Types.Furniture (furnitureSprite)
 import Data.String.CodeUnits (singleton)

@@ -1,15 +1,15 @@
 module Init where
 
-import Data.Array (head)
-import Data.Map (Map, fromFoldable)
-import Data.Sprite (spriteAt)
 import Extra.Prelude
 
 import Atlas (Position(..), ChartId(..))
-import Data.Mob (Mob(..), MobName(..), mobs)
+import Data.Array (head)
+import Data.Map (Map, fromFoldable)
+import Data.Mob (mobs)
 import Map.Gen (initMap)
 import Random (newGen)
-import Types (GameState)
+import Types (GameState, Mob)
+import Types.Mob (mkMob)
 
 init :: Effect GameState
 init = do
@@ -42,8 +42,7 @@ exampleItems = fromFoldable
 -}
 exampleMobs :: Map Position Mob
 exampleMobs = fromFoldable
-  [ Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}} |> case head mobs of
-                                                                        Just a -> a
-                                                                        Nothing -> Mob { name: MobName "Broken", sprite: spriteAt 4 3, hp: 1 }
+  [ Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}} |> 
+      mkMob (unsafeFromJust $ head mobs)
   ]
 --}
