@@ -1,42 +1,47 @@
-module Data.Item where
+module Data.Item
+  ( ItemType
+  , items
+  , getItemRecord
+  , itemByChar
+  ) where
 
 import Extra.Prelude
 
 import Data.Map (Map)
+import Data.Map as Map
 
 import Data.Attribute (Attribute (..))
 import Data.Sprite (Sprite, spriteAt)
 
-newtype ItemName = ItemName String
-derive instance eqItemName :: Eq ItemName
-derive instance ordItemName :: Ord ItemName
-derive instance newtypeItemName :: Newtype ItemName _
+newtype ItemType = ItemType String
+derive instance eqItemName :: Eq ItemType
+derive instance ordItemName :: Ord ItemType
 
-newtype Item = Item
-  { name :: ItemName
+type ItemRecord =
+  { itemType :: ItemType
+  , name :: String
   , char :: Maybe Char
   , sprite :: Sprite
   , attributes :: Array Attribute
   }
 
-derive instance newtypeItem :: Newtype Item _
+i :: Char -> Int -> Int -> String -> Array String -> ItemRecord
+i c = mkItemRecord (Just c)
 
-i :: Char -> Int -> Int -> String -> Array String -> Item
-i c = mkItem (Just c)
+j :: Int -> Int -> String -> Array String -> ItemRecord
+j = mkItemRecord Nothing
 
-j :: Int -> Int -> String -> Array String -> Item
-j = mkItem Nothing
-
-mkItem :: Maybe Char -> Int -> Int -> String -> Array String -> Item
-mkItem char x y name attributes = Item
-  { name: ItemName name
+mkItemRecord :: Maybe Char -> Int -> Int -> String -> Array String -> ItemRecord
+mkItemRecord char x y name attributes =
+  { itemType: ItemType name
   , char
+  , name
   , sprite: spriteAt x y
   , attributes: Attribute <$> attributes
   }
 
-items :: Array Item
-items =
+itemRecords :: Array ItemRecord
+itemRecords =
   [ j     1 2 "Tomato salad"     mempty
   , j     2 2 "Soup"             mempty
   , j     3 2 "Roast"            mempty
@@ -50,14 +55,18 @@ items =
   , i 's' 2 1 "Cave salt"        mempty
   ]
 
-itemsByChar :: Map Char Item
-itemsByChar = keyBy' (_.char <<< un Item) items
+items :: Array ItemType
+items = _.itemType <$> itemRecords
 
-itemsByName :: Map ItemName Item
-itemsByName = keyBy itemName items
+itemMap :: Map ItemType ItemRecord
+itemMap = keyBy _.itemType itemRecords
 
-itemName :: Item -> ItemName
-itemName = _.name <<< un Item
+getItemRecord :: ItemType -> ItemRecord
+getItemRecord t = unsafeFromJust $ Map.lookup t itemMap
+  -- this is safe as long as ItemType is only ever constructed within itemRecords
 
-itemSprite :: Item -> Sprite
-itemSprite = _.sprite <<< un Item
+itemByName :: Map ItemType ItemRecord
+itemByName = keyBy _.itemType itemRecords
+
+itemByChar :: Map Char ItemType
+itemByChar = keyBy' (_.char <<< getItemRecord) items

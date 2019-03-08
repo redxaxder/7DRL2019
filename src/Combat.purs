@@ -1,7 +1,5 @@
 module Combat where
 
-import Prelude
-
 import Extra.Prelude
 
 import Atlas (Position)

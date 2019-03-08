@@ -9,20 +9,21 @@ import Atlas (Position(..), ChartId(..))
 import Data.Mob (Mob(..), MobName(..), mobs)
 import Map.Gen (initMap)
 import Random (newGen)
-import Types (GameState, Item)
+import Types (GameState)
 
 init :: Effect GameState
 init = do
   gen <- newGen
-  let { atlas, player, placeholders } = initMap gen
+  let { atlas, player, placeholders, furniture } = initMap gen
   pure { atlas
-       , player
+       , fov: mempty
+       , furniture
        , inventory: mempty --exampleInventory
        , items: mempty --exampleItems
-       , placeholders
-       , fov: mempty
        -- , mobs: mempty --exampleMobs
+       , placeholders
        , mobs: exampleMobs
+       , player
        }
 
 {-

@@ -36,7 +36,7 @@ import Control.Monad.Rec.Class (Step (..), tailRec)
 import Data.Array (groupBy, sortBy, zip)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
-import Data.Foldable (class Foldable, null, length, foldr, foldl, sum)
+import Data.Foldable (class Foldable, null, length, elem, foldr, foldl, sum)
 import Data.Map (Map, alter, empty)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)
@@ -48,7 +48,7 @@ import Data.Traversable (class Traversable, traverse, traverse_, sequence_, sequ
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (unfoldr)
-import Debug.Trace (trace)
+import Debug.Trace (trace, spy)
 import Effect (Effect)
 import Extra.Math (class Real, Vector(..), innerProduct, norm, toNumber, (**))
 import Partial (crash)
@@ -124,7 +124,6 @@ unsafeFromJust x = unsafePartial (fromJust x)
 
 class Monoid a <= Group a where
   invert :: a -> a
-
 
 keyBy :: forall k v. Ord k => (v -> k) -> Array v -> Map k v
 keyBy f vs = Map.fromFoldable $ zip (f <$> vs) vs

@@ -1,10 +1,12 @@
 module Types
   ( module Types
   , module Data.Attribute
-  , module Data.Furniture
-  , module Data.Item
+  , module Types.Furniture
+  , module Types.Item
   , module Data.Region
   , module Data.Sprite
+  , module Data.Maps
+  , module Data.Mob
   , module Data.Tile
   )
   where
@@ -12,11 +14,14 @@ module Types
 import Extra.Prelude
 
 import Data.Map (Map)
+import Data.Map as Map
+import Data.Array (catMaybes)
 
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
-import Data.Furniture (Furniture (..), FurnitureName (..))
-import Data.Item (Item (..), ItemName (..))
+import Types.Furniture (FurnitureType, Furniture (..))
+import Types.Item (Item (..), ItemType)
+import Data.Maps (MapData (..))
 import Data.Mob (Mob (..), MobName (..))
 import Data.Region (Region (..))
 import Data.Sprite (Sprite (..))
@@ -32,18 +37,20 @@ type GameState =
  , placeholders :: Map Position Placeholder
  , fov :: FieldOfView
  , mobs :: Map Position Mob
+ , furniture :: Map Position Furniture
  }
+
+-- TODO: where should this live?
+getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen :: Vector Int }
+getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
+      map (\a -> { a, screen }) $ Map.lookup absolute m
 
 data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
 
---type Item = { name :: String }
-
-type MapGenHint = { rng :: Gen }
+type MapGenHint = { rng :: Gen, region :: Region }
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
-
-type MapData = { terrain :: Array String }

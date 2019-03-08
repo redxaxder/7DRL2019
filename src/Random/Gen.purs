@@ -19,8 +19,7 @@ module Random.Gen
 import Extra.Prelude
 
 import Effect.Random (randomInt)
-import Data.Int (floor)
-import Data.Array (index)
+import Data.Array.NonEmpty (NonEmptyArray, index)
 import Partial.Unsafe (unsafePartial)
 
 import Random.Blob (Blob, Ints (..), Doubles(..), toInts, toDoubles, fromInts, perturb, merge)
@@ -86,7 +85,7 @@ chance p = (>) p <$> intRange 0 100
 intRange :: Int -> Int -> Random Int
 intRange low high = flip map nextInt $ \i -> (i `mod` (high - low + 1)) + low
 
-element :: forall a. Array a -> Random a
+element :: forall a. NonEmptyArray a -> Random a
 element arr = unsafeIndex arr <$> intRange 0 (length arr - 1)
   where
   unsafeIndex a i = unsafePartial $ fromJust $ index a i
