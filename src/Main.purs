@@ -6,7 +6,7 @@ import Data.Enum (enumFromTo)
 import Data.Map (delete)
 import Data.Map as Map
 import Data.Set as Set
-import Control.Monad.State (execState, State, get, modify_)
+import Control.Monad.State (execState, State, get, modify_, modify)
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -23,7 +23,7 @@ import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
-import Types (GameState, LogEvent(..), Mob)
+import Types (GameState, LogEvent(..), Mob, FieldOfView)
 import Types.Item (itemName)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
@@ -111,12 +111,14 @@ stepMobs gs =
         case mmob of
           Nothing -> pure unit
           Just mob -> do
-            modify_ $ (\x -> x{ mobs = Map.delete k x.mobs })
+            g <- modify $ (\x -> x{ mobs = Map.delete k x.mobs })
             player <- _.player <$> get
-            let Tuple k' mob' = execState (getMobAction player (Tuple k mob)) (Tuple k mob)
+            let Tuple k' mob' = execState (getMobAction g.fov player (Tuple k mob)) (Tuple k mob)
             modify_ $ (\x -> x{ mobs = Map.insert k' mob' x.mobs })
 
-getMobAction :: Position -> Tuple Position Mob -> MobAction
-getMobAction = todo
+getMobAction :: FieldOfView -> Position -> Tuple Position Mob -> MobAction
+getMobAction fov player (Tuple mobPosition mob) = todo -- do
+  -- stuff that can changemob state
 
-type MobAction = State (Tuple Position Mob) Unit -- Tuple Position Mob -> Tuple (Tuple Poition Mob) Unit
+
+type MobAction = State (Tuple Position Mob) Unit 
