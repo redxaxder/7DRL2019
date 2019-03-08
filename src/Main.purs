@@ -21,7 +21,8 @@ import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
 import Partial.Unsafe (unsafePartial)
-import Types (GameState)
+import Types (GameState, LogEvent(..))
+import Types.Item (itemName)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -95,10 +96,10 @@ pickUpItem gs =
   let maybeUpdated = do
         i <- Map.lookup gs.player gs.items
         c <- getInventorySlot gs
-        pure { newInventory: Map.insert c i gs.inventory, newItems: Map.delete gs.player gs.items }
+        pure { newInventory: Map.insert c i gs.inventory, newItems: Map.delete gs.player gs.items, acquiredItem: i }
     in case maybeUpdated of
-         Nothing -> gs
-         Just { newInventory, newItems } -> gs { inventory = newInventory, items = newItems }
+         Nothing -> gs { logevent = Nothing }
+         Just { newInventory, newItems, acquiredItem } -> gs { inventory = newInventory, items = newItems, logevent = Just $ ItemEvent acquiredItem }
 
 -- monsters move towards the player, first x then y
 simpleMonsterUpdate :: GameState -> GameState

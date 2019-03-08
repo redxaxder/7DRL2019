@@ -38,6 +38,7 @@ type GameState =
  , fov :: FieldOfView
  , mobs :: Map Position Mob
  , furniture :: Map Position Furniture
+ , logevent :: Maybe LogEvent -- Nothing == nothing to log
  }
 
 -- TODO: where should this live?
@@ -54,3 +55,5 @@ type MapGenHint = { rng :: Gen, region :: Region }
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
+
+data LogEvent = ItemEvent Item | CombatEvent Mob

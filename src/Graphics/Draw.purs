@@ -10,7 +10,7 @@ import Data.Sprite (glitch, player)
 import Types.Furniture (furnitureSprite)
 import Data.String.CodeUnits (singleton)
 import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, UIRenderData(..), Sprite, getVisible)
+import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..))
 import Graphics.Render (Context, drawSpriteToGrid, drawText, clear, setFillStyle)
 import Types.Item (itemSprite, itemName)
 visionRange :: Int -- TODO: move this to where it really lives
@@ -57,6 +57,7 @@ drawMain ctx gs = do
   getVisible gs.fov gs.mobs # traverse_ \{ a, screen } ->
     drawSpriteToGrid ctx (mobSprite a) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
+  drawLog ctx gs
   pure unit
   where
 
@@ -70,3 +71,8 @@ drawMain ctx gs = do
     where
     x' = x + div displayDimensions.width 2
     y' = y + div displayDimensions.height 2
+
+drawLog :: Context -> GameState -> Effect Unit
+drawLog ctx gs = case gs.logevent of
+  Just (ItemEvent item) -> drawText ctx ("Acquired " <> itemName item <> "!") 53.0 0.0
+  _ -> pure unit

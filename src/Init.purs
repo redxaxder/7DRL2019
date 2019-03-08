@@ -20,10 +20,10 @@ init = do
        , furniture
        , inventory: mempty --exampleInventory
        , items: mempty --exampleItems
-       -- , mobs: mempty --exampleMobs
        , placeholders
        , mobs: exampleMobs
        , player
+       , logevent: Nothing
        }
 
 {-
