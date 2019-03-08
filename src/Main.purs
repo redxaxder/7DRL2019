@@ -3,7 +3,7 @@ module Main where
 import Extra.Prelude
 
 import Atlas (getElement, move)
-import Combat (CombatEntity(..), doAttack)
+import Combat (doAttack)
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Data.Enum (enumFromTo)
 import Data.Map (delete)
@@ -76,7 +76,7 @@ handleAction gs (Move dir) =
         Nothing -> if blocksMovement (getElement player atlas)
                       then Nothing
                       else Just $ gs { player = player, atlas = atlas }
-        Just a -> Just $ doAttack gs Player player
+        Just a -> Just $ doAttack gs player
 handleAction gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }
