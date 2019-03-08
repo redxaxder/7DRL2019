@@ -2,9 +2,11 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
-import Constants (displayDimensions, tileDimensions, white)
 import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable)
+import Data.Map (Map, toUnfoldable)
+
+import Atlas (Position)
+import Constants (displayDimensions, tileDimensions, white)
 import Types.Mob (mobSprite)
 import Data.Sprite (glitch, player)
 import Types.Furniture (furnitureSprite)
@@ -13,6 +15,7 @@ import Data.Tile (Tile, tileSprite)
 import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..))
 import Graphics.Render (Context, drawSpriteToGrid, drawText, clear, setFillStyle)
 import Types.Item (itemSprite, itemName)
+
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
 
@@ -50,16 +53,17 @@ drawMain ctx gs = do
   clear ctx
   gs.fov # traverse_ \{ screen, tiles } ->
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
-  getVisible gs.fov gs.furniture # traverse_ \{ a, screen } ->
-    drawSpriteToGrid ctx (furnitureSprite a) (toCornerRelative screen)
-  getVisible gs.fov gs.items # traverse_ \{ a, screen } ->
-    drawSpriteToGrid ctx (itemSprite a) (toCornerRelative screen)
-  getVisible gs.fov gs.mobs # traverse_ \{ a, screen } ->
-    drawSpriteToGrid ctx (mobSprite a) (toCornerRelative screen)
+  drawVisible gs.furniture furnitureSprite
+  drawVisible gs.items itemSprite
+  drawVisible gs.mobs mobSprite
   drawSpriteToGrid ctx player (toCornerRelative zero)
   drawLog ctx gs
   pure unit
   where
+
+  drawVisible :: forall a. Map Position a -> (a -> Sprite) -> Effect Unit
+  drawVisible m sprite = getVisible gs.fov m # traverse_ \{ a, screen } ->
+    drawSpriteToGrid ctx (sprite a) (toCornerRelative screen)
 
   spriteFromTileStack :: Array Tile -> Sprite
   spriteFromTileStack xss = case NE.fromArray xss of

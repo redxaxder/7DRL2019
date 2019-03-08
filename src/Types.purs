@@ -44,7 +44,7 @@ type GameState =
 -- TODO: where should this live?
 getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen :: Vector Int }
 getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
-      map (\a -> { a, screen }) $ Map.lookup absolute m
+  map (\a -> { a, screen }) $ Map.lookup absolute m
 
 data UIRenderData = MainGame
   | StartScreen
