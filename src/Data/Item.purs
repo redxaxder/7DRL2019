@@ -48,10 +48,10 @@ itemRecords =
   , j     4 2 "Tomato"           [ "tomato" ]
   , j     5 2 "Onion"            [ "onion" ]
   , j     6 2 "Raw meat"         [ "meat" ]
+  , j     7 2 "Deep lettuce"     [ "lettuce" ]
   , j     1 3 "Diced tomato"     [ "tomato" ]
   , j     2 3 "Diced onion"      [ "onion" ]
   , j     3 3 "Chopped lettuce"  [ "lettuce" ]
-  , i 'l' 1 1 "Deep lettuce"     [ "lettuce" ]
   , i 's' 2 1 "Cave salt"        mempty
   ]
 
