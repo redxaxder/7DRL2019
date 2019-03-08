@@ -9,6 +9,7 @@ import Data.Item (ItemType, getItemRecord)
 import Data.Sprite (Sprite)
 
 newtype Item = Item { itemType :: ItemType } -- TODO: Add relevant item state here
+derive instance eqItem :: Eq Item
 derive instance newtypeItem :: Newtype Item _
 
 mkItem :: ItemType -> Item

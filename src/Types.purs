@@ -48,6 +48,9 @@ getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
 data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
+  | Crafting (Array { label :: Char, item :: Item }) (Array Recipe)
+
+data Recipe = Recipe -- TODO
 
 type MapGenHint = { rng :: Gen, region :: Region }
 

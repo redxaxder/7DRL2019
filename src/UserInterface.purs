@@ -2,6 +2,8 @@ module UserInterface where
 
 import Extra.Prelude
 
+import Data.Array (cons, delete)
+import Data.Foldable (find)
 import Data.Map as Map
 import Data.String.CodePoints (stripPrefix)
 import Data.String.CodeUnits (toChar)
@@ -38,10 +40,16 @@ main :: GameState -> UI
 main gs = AwaitingInput { uiRender: MainGame, next }
   where
     next "ArrowLeft"  = moveOrCraft gs L
+    next "KeyH"       = moveOrCraft gs L
     next "ArrowRight" = moveOrCraft gs R
+    next "KeyL"       = moveOrCraft gs R
     next "ArrowDown"  = moveOrCraft gs D
+    next "KeyJ"       = moveOrCraft gs D
     next "ArrowUp"    = moveOrCraft gs U
+    next "KeyK"       = moveOrCraft gs U
     next "KeyI"       = inventory gs
+    next "Space"      = GameAction { uiAction: Pass, next: main }
+    next "Period"     = GameAction { uiAction: Pass, next: main }
     next _            = main gs
 
 moveOrCraft :: GameState -> Direction -> UI
@@ -51,12 +59,27 @@ moveOrCraft gs d =
            Nothing -> GameAction { uiAction: (Move d), next: main }
            Just furniture -> if furnitureType furniture == counter
                                then inventory gs -- TODO: to item serving
-                               else inventory gs -- TODO: to crafting
+                               else crafting gs mempty
+
+crafting :: GameState -> Array { label :: Char, item :: Item } -> UI
+crafting gs selected = AwaitingInput { uiRender: Crafting selected mempty, next }
+  where
+    next "Escape" = main gs
+    next "Enter" = main gs
+    next "Space" = main gs -- TODO: craft the item!
+    next key = fromMaybe (crafting gs selected) $ do
+      label <- getCharacter key
+      item <- Map.lookup label gs.inventory
+      let selected' = case find (\x -> x.label == label) selected of
+                        Nothing -> cons { label, item } selected
+                        Just x -> delete x selected
+      pure $ crafting gs selected'
+
 inventory :: GameState -> UI
 inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing, next }
   where
     next key = case getCharacter key of
-      Nothing -> main gs -- it's not a letter; exit back to main UI
+      Nothing -> inventory gs -- it's not a letter; stay here
       Just d -> -- it's a letter; enter the subinventory screen for the corresponding item (if exists). stay here (if doesn't exist)
         case (lookup d gs.inventory) of
           Nothing -> inventory gs
