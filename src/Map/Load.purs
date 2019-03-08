@@ -1,4 +1,4 @@
-module Map.Load 
+module Map.Load
   ( load
   ) where
 
@@ -17,8 +17,10 @@ import Data.Maps (getTerrain)
 import Direction (Direction(..))
 import Direction as Dir
 import Random (Random, branch)
-import Types (Placeholder, MapData, Tile (..), Region (..), Furniture)
+import Types (Placeholder, MapData, Tile (..), Region (..), Furniture, Item)
 import Types.Furniture (mkFurniture)
+import Types.Item (mkItem)
+import Data.Item (itemByChar)
 
 load
   :: MapData
@@ -28,6 +30,7 @@ load
             , exits :: ChartId -> Array Placeholder
             , entrance :: LocalPosition
             , furniture :: ChartId -> Map Position Furniture
+            , items :: ChartId -> Map Position Item
             }
 load mapData region rotation = do
   let mapTokens = rotate rotation $ toMapTokens region (getTerrain mapData)
@@ -47,9 +50,10 @@ load mapData region rotation = do
         Just {x,y} -> V { x, y }
       chart = mkChart (Wall Cave) tiles
       furniture = placeFurniture indexedMap
+      items = placeItems indexedMap
   generators <- traverse (\_ -> branch) protoExits
   let exits cid = zipWith (mkExit cid) protoExits (( \rng -> {rng, region}) <$> generators )
-  pure $ { chart, exits, entrance, furniture }
+  pure $ { chart, exits, entrance, furniture, items }
 
 placeFurniture :: IxArray MapToken -> ChartId -> Map Position Furniture
 placeFurniture mapTokens chartId = Map.fromFoldable $ catMaybes
@@ -57,6 +61,13 @@ placeFurniture mapTokens chartId = Map.fromFoldable $ catMaybes
     c <- getChar a
     fType <- Map.lookup c furnitureByChar
     pure $ Tuple (Position { chartId, localPosition: V{x,y} }) (mkFurniture fType)
+
+placeItems :: IxArray MapToken -> ChartId -> Map Position Item
+placeItems mapTokens chartId = Map.fromFoldable $ catMaybes
+  $ mapTokens # map \{x,y,a} -> do
+    c <- getChar a
+    iType <- Map.lookup c itemByChar
+    pure $ Tuple (Position { chartId, localPosition: V{x,y} }) (mkItem iType)
 
 rotateLeft :: forall a. Array (Array a) -> Array (Array a)
 rotateLeft xs = case sequence $ map unsnoc xs of

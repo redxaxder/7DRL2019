@@ -62,7 +62,7 @@ drawMain ctx gs = do
   getVisible gs.fov gs.furniture # traverse_ \{ a, screen } ->
     drawSpriteToGrid ctx (furnitureSprite a) (toCornerRelative screen)
   getVisible gs.fov gs.items # traverse_ \{ a, screen } ->
-    drawSpriteToGrid ctx (spriteFromItem a) (toCornerRelative screen)
+    drawSpriteToGrid ctx (itemSprite a) (toCornerRelative screen)
 --  getVisible gs.fov gs.mobs # traverse_ \{ a: mob, screen } ->
 --    drawSpriteToGrid ctx ( _.gfx mob ) (toCornerRelative screen)
   drawSpriteToGrid ctx player (toCornerRelative zero)
@@ -74,12 +74,6 @@ drawMain ctx gs = do
     Nothing -> glitch
     Just xs -> tileSprite $ NE.head xs
 
-  spriteFromItem :: Item -> Sprite
-  spriteFromItem _ = glitch
-
-  drawItem :: Position -> Item -> Effect Unit
-  drawItem (Position { localPosition }) item =
-    drawSpriteToGrid ctx (itemSprite item) (toCornerRelative localPosition)
   toCornerRelative :: Vector Int -> Vector Int
   toCornerRelative (V {x,y}) = V { x: x', y: y' }
     where
