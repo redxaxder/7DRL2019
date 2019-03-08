@@ -12,12 +12,13 @@ import Data.Map as Map
 import Data.String.CodeUnits (toCharArray)
 
 import Atlas (Chart, LocalPosition, Position(..), ChartId, mkChart)
-import Data.Furniture (furnitureByChar, mkFurniture)
+import Data.Furniture (furnitureByChar)
 import Data.Maps (getTerrain)
 import Direction (Direction(..))
 import Direction as Dir
 import Random (Random, branch)
 import Types (Placeholder, MapData, Tile (..), Region (..), Furniture)
+import Types.Furniture (mkFurniture)
 
 load
   :: MapData

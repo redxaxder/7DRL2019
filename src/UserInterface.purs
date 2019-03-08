@@ -12,7 +12,7 @@ import Atlas (move)
 import Types (GameState, UIRenderData (..), Item)
 import Intent (Action (..))
 import Direction (Direction (..))
-import Data.Furniture (counter, furnitureType)
+import Types.Furniture (counter, furnitureType)
 
 import Data.Map (lookup)
 -- Javascript key codes here: https://keycode.info/

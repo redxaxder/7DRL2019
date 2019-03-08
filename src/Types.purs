@@ -1,8 +1,8 @@
 module Types
   ( module Types
   , module Data.Attribute
-  , module Data.Furniture
-  , module Data.Item
+  , module Types.Furniture
+  , module Types.Item
   , module Data.Region
   , module Data.Sprite
   , module Data.Maps
@@ -19,8 +19,8 @@ import Data.Array (catMaybes)
 
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
-import Data.Furniture (FurnitureType, Furniture (..))
-import Data.Item (Item (..), ItemName (..))
+import Types.Furniture (FurnitureType, Furniture (..))
+import Types.Item (Item (..), ItemType)
 import Data.Maps (MapData (..))
 import Data.Mob (Mob (..), MobName (..))
 import Data.Region (Region (..))

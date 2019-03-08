@@ -16,12 +16,10 @@ import Graphics.Render
   , setFillStyle
   )
 import Data.Sprite (glitch, player)
-import Data.Furniture (furnitureSprite)
+import Types.Furniture (furnitureSprite)
 import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, ItemName (..), UIRenderData(..), Sprite, Furniture,
-  getVisible)
-
-import Data.Item (itemSprite, itemName)
+import Types (GameState, Item, UIRenderData(..), Sprite, Furniture, getVisible)
+import Types.Item (itemSprite, itemName)
 import Data.Mob (Mob)
 
 visionRange :: Int -- TODO: move this to where it really lives
@@ -38,7 +36,7 @@ drawInventoryScreen ctx Nothing gs = do
   drawText ctx "Inventory" 53.0 0.0
   void $ flip traverseWithIndex items \ix (Tuple c item) ->
     drawText ctx 
-    (singleton c <> ") " <> un ItemName (itemName item))
+    (singleton c <> ") " <> itemName item)
     53.0
     (toNumber (tileDimensions.height * (ix + 1)))
 
@@ -46,7 +44,7 @@ drawInventoryScreen ctx (Just {label, item}) gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   --clearRegion ctx { x: 53.0, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (length items + 1)}
   drawText ctx 
-    (un ItemName $ itemName item)
+    (itemName item)
     53.0
     0.0
 
