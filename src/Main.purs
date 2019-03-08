@@ -2,26 +2,28 @@ module Main where
 
 import Extra.Prelude
 
-import Atlas (getElement, move)
-import Combat (doAttack)
-import Control.Monad.Rec.Class (tailRec, Step(..))
 import Data.Enum (enumFromTo)
 import Data.Map (delete)
 import Data.Map as Map
 import Data.Set as Set
-import Data.Tile (blocksMovement)
+import Control.Monad.State (execState, State, get, modify_)
+import Control.Monad.Rec.Class (tailRec, Step(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
+import Partial.Unsafe (unsafePartial)
+
+import Atlas (getElement, move, Position)
+import Combat (doAttack)
+import Data.Tile (blocksMovement)
+import FOV (visibleTiles)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
-import Partial.Unsafe (unsafePartial)
-import Types (GameState, LogEvent(..))
+import Types (GameState, LogEvent(..), Mob)
 import Types.Item (itemName)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
@@ -57,7 +59,7 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = pickUpItem <<< tailRec expand
+stepEnvironment = stepMobs <<< pickUpItem <<< tailRec expand
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -101,6 +103,20 @@ pickUpItem gs =
          Nothing -> gs { logevent = Nothing }
          Just { newInventory, newItems, acquiredItem } -> gs { inventory = newInventory, items = newItems, logevent = Just $ ItemEvent acquiredItem }
 
--- monsters move towards the player, first x then y
-simpleMonsterUpdate :: GameState -> GameState
-simpleMonsterUpdate gs = todo
+stepMobs :: GameState -> GameState
+stepMobs gs = 
+  let mobKeys = Map.keys gs.mobs
+  in  flip execState gs $ mobKeys # traverse_ \k -> do
+        mmob <- Map.lookup k <<< _.mobs <$> get
+        case mmob of
+          Nothing -> pure unit
+          Just mob -> do
+            modify_ $ (\x -> x{ mobs = Map.delete k x.mobs })
+            player <- _.player <$> get
+            let Tuple k' mob' = execState (getMobAction player (Tuple k mob)) (Tuple k mob)
+            modify_ $ (\x -> x{ mobs = Map.insert k' mob' x.mobs })
+
+getMobAction :: Position -> Tuple Position Mob -> MobAction
+getMobAction = todo
+
+type MobAction = State (Tuple Position Mob) Unit -- Tuple Position Mob -> Tuple (Tuple Poition Mob) Unit
