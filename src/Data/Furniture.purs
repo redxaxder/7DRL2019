@@ -5,6 +5,7 @@ module Data.Furniture
   , furniture
   , furnitureByChar
   , furnitureSprite
+  , furnitureType
   , hasAttribute
   , mkFurniture
   )
@@ -24,6 +25,15 @@ import Data.Sprite (Sprite, spriteAt)
 newtype Furniture = Furniture { name :: FurnitureType }
 mkFurniture :: FurnitureType -> Furniture
 mkFurniture name = Furniture { name }
+
+furnitureSprite :: Furniture -> Sprite
+furnitureSprite = _.sprite <<< getFurnitureRecord <<< _.name <<< un Furniture
+
+furnitureType :: Furniture -> FurnitureType
+furnitureType (Furniture {name}) = name
+
+hasAttribute :: Furniture -> Attribute -> Boolean
+hasAttribute (Furniture {name}) attr = elem attr (getFurnitureRecord name).attributes
 
 derive instance newtypeFurniture :: Newtype Furniture _
 
@@ -72,11 +82,5 @@ getFurnitureRecord :: FurnitureType -> FurnitureRecord
 getFurnitureRecord name = unsafePartial $ fromJust $ Map.lookup name furnitureMap
   -- As long as FurnitureType is only constructed in `furnitureRecords` this is safe
 
-furnitureSprite :: Furniture -> Sprite
-furnitureSprite = _.sprite <<< getFurnitureRecord <<< _.name <<< un Furniture
-
 furnitureByChar :: Map Char FurnitureType
 furnitureByChar = keyBy (_.char <<< getFurnitureRecord) furniture
-
-hasAttribute :: Furniture -> Attribute -> Boolean
-hasAttribute (Furniture {name}) attr = elem attr (getFurnitureRecord name).attributes
