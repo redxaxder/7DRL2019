@@ -79,7 +79,7 @@ inventory :: GameState -> UI
 inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing, next }
   where
     next key = case getCharacter key of
-      Nothing -> inventory gs -- it's not a letter; stay here
+      Nothing -> main gs -- it's not a letter; back to main
       Just d -> -- it's a letter; enter the subinventory screen for the corresponding item (if exists). stay here (if doesn't exist)
         case (lookup d gs.inventory) of
           Nothing -> inventory gs
