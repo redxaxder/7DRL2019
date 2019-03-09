@@ -13,7 +13,7 @@ module Types
 
 import Extra.Prelude
 
-import Control.Monad.State (State, get, modify_, put)
+import Control.Monad.State (State, get, modify_, put, runState)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Array (catMaybes, deleteAt, findIndex, index, (:))
@@ -35,7 +35,7 @@ import Random (Gen)
 import Random.Gen (Random, chance, element, runRandom)
 import Types.Furniture (FurnitureType, Furniture (..))
 import Types.Item (Item (..), ItemType)
-import Types.Mob (Mob (..), MobType)
+import Types.Mob (Mob (..), MobType, position)
 
 type GameState =
   { player :: Position
@@ -50,9 +50,21 @@ type GameState =
   , logevents :: Array LogEvent -- log all the events
   }
 
-liftMobState :: forall a. Position -> State Mob a -> State GameState a
-liftMobState p s = zoom (prop $ SProxy :: SProxy "mobs") todo
-
+liftMobState :: forall a. Position -> (GameState -> State Mob a) -> State GameState (Maybe a)
+liftMobState p f = do
+  gs <- get
+  zoom (prop $ SProxy :: SProxy "mobs") $ do
+    mobMap <- get
+    case Map.lookup p mobMap of
+      Nothing -> pure Nothing
+      Just m -> let (Tuple a m') = runState (f gs) m
+                    p' = position m'
+                in if Map.member p' mobMap && (p' /= p)
+                    then pure Nothing
+                    else do
+                      modify_ $ Map.delete p
+                      modify_ $ Map.insert (position m') m'
+                      pure (Just a)
 
 
 -- TODO: where should this live?

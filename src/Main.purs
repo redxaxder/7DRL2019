@@ -2,38 +2,35 @@ module Main where
 
 import Extra.Prelude
 
-import Atlas (getElement, move, Position)
-import Atlas (getElement, move, Position)
-import Combat (doAttack)
-import Combat (doAttack, attackPlayer)
-import Control.Monad.Rec.Class (tailRec, Step(..))
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Control.Monad.State (execState, State, get, modify_, modify)
 import Data.Array (cons, filter, find)
 import Data.Array as Array
-import Data.Enum (enumFromTo)
 import Data.Map (delete, toUnfoldable)
 import Data.Map as Map
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tile (blocksMovement)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
+import FRP.Event (create, subscribe, sampleOn)
+import FRP.Event.Keyboard (down)
+import Map.Gen (expandMap)
+import Partial.Unsafe (unsafePartial)
+
+import Atlas (getElement, move, Position)
+import Data.Enum (enumFromTo)
+import FOV (visibleTiles)
+import Combat (doAttack, attackPlayer)
 import Data.Tile (blocksMovement, Tile(..))
 import Data.Tuple (fst, snd)
 import Direction (Direction(..))
-import Effect.Aff (launchAff_)
-import Effect.Class (liftEffect)
-import FOV (visibleTiles)
-import FRP.Event (create, subscribe, sampleOn)
-import FRP.Event.Keyboard (down)
+import Types (GameState, LogEvent(..), Mob, FieldOfView, liftMobState)
+import Types.Item (itemName)
+import Types.Mob (Mob, position, moveMob)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
-import Map.Gen (expandMap)
-import Partial.Unsafe (unsafePartial)
-import Types (GameState, LogEvent(..), Mob, FieldOfView)
-import Types.Item (itemName)
-import Types.Mob (Mob, position)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -68,7 +65,7 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = monsterAction <<< pickUpItem <<< tailRec expand
+stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -152,3 +149,46 @@ monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.va
     findEmptySpaceDirection :: Position -> Direction -> Boolean
     findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
       in not $ blocksMovement $ getElement targetPos gs.atlas
+
+
+
+
+doMobStuff :: GameState -> GameState
+doMobStuff gs = flip execState gs $ (Map.keys gs.mobs) # traverse_ \mobPos -> do
+  maction <- liftMobState mobPos (individualMonsterAction2)
+  case spy "a" maction of
+    Nothing -> pure unit
+    Just action -> modify_ $ interpretMobAction action
+
+
+interpretMobAction :: MobAction -> GameState -> GameState
+interpretMobAction (MobAttack mob) gs = attackPlayer gs mob
+interpretMobAction (MobPass mob) gs = gs
+
+data MobAction = MobAttack Mob | MobPass Mob
+individualMonsterAction2 :: GameState -> State Mob MobAction
+individualMonsterAction2 gs = do
+  mob <- get
+  let mobPos = position mob
+  case playerAdjacent mobPos of
+    Just dir -> MobAttack <$> get
+    Nothing -> case findEmptySpace mobPos of
+      Just moveDir -> do
+        modify_ $ moveMob moveDir gs.atlas
+        MobPass <$> get
+      Nothing -> MobPass <$> get
+  where
+    playerAdjacent :: Position -> Maybe Direction
+    playerAdjacent = findAdjacent playerAdjacentDirection
+    
+    playerAdjacentDirection :: Position -> Direction -> Boolean
+    playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
+
+    findEmptySpace :: Position -> Maybe Direction
+    findEmptySpace = findAdjacent findEmptySpaceDirection
+
+    findEmptySpaceDirection :: Position -> Direction -> Boolean
+    findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
+      in not $ blocksMovement $ getElement targetPos gs.atlas
+
+  
