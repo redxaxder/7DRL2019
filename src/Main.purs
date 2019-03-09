@@ -134,7 +134,7 @@ monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.va
             findEmptySpace = findAdjacent findEmptySpaceDirection
 
             findEmptySpaceDirection :: Position -> Direction -> Boolean
-            findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
+            findEmptySpaceDirection pos dir = let targetPos = move dir gs'.atlas pos
               -- in not $ blocksMovement $ getElement targetPos gs.atlas
               in passable gs' targetPos
           in case findEmptySpace mobPos of
