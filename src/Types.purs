@@ -51,7 +51,7 @@ type GameState =
   }
 
 liftMobState :: forall a. Position -> State Mob a -> State GameState a
-liftMobState p s = zoom (prop $ SProxy :: SProxy "mobs") 
+liftMobState p s = zoom (prop $ SProxy :: SProxy "mobs") todo
 
 
 
