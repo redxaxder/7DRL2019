@@ -3,15 +3,19 @@ module Data.Item
   , items
   , getItemRecord
   , itemByChar
+  , stringToItemType
+  , hasAttribute
   ) where
 
 import Extra.Prelude
 
+import Data.Foldable (find)
 import Data.Map (Map)
 import Data.Map as Map
 
-import Data.Attribute (Attribute (..))
+import Data.Attribute (Attribute(..))
 import Data.Sprite (Sprite, spriteAt)
+import Data.String.Common (toLower)
 
 newtype ItemType = ItemType String
 derive instance eqItemName :: Eq ItemType
@@ -45,14 +49,14 @@ itemRecords =
   [ j     1 2 "Tomato salad"     mempty
   , j     2 2 "Soup"             mempty
   , j     3 2 "Roast"            mempty
-  , j     4 2 "Tomato"           [ "tomato" ]
-  , j     5 2 "Onion"            [ "onion" ]
+  , j     4 2 "Whole tomato"     [ "tomato" ]
+  , j     5 2 "Whole onion"      [ "onion" ]
   , j     6 2 "Raw meat"         [ "meat" ]
   , j     7 2 "Deep lettuce"     [ "lettuce" ]
   , j     1 3 "Diced tomato"     [ "tomato" ]
   , j     2 3 "Diced onion"      [ "onion" ]
   , j     3 3 "Chopped lettuce"  [ "lettuce" ]
-  , i 's' 2 1 "Cave salt"        mempty
+  , i 's' 2 1 "Cave salt"        [ "salt" ]
   ]
 
 items :: Array ItemType
@@ -70,3 +74,9 @@ itemByName = keyBy _.itemType itemRecords
 
 itemByChar :: Map Char ItemType
 itemByChar = keyBy' (_.char <<< getItemRecord) items
+
+hasAttribute :: Attribute -> ItemType -> Boolean
+hasAttribute attr item = elem attr (getItemRecord item).attributes
+
+stringToItemType :: Partial => String -> ItemType
+stringToItemType name = fromJust $ items # find \item -> toLower (getItemRecord item).name == toLower name
