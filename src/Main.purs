@@ -5,6 +5,7 @@ import Extra.Prelude
 import Atlas (getElement, move)
 import Combat (doAttack)
 import Control.Monad.Rec.Class (tailRec, Step(..))
+import Data.Array (cons)
 import Data.Enum (enumFromTo)
 import Data.Map (delete)
 import Data.Map as Map
@@ -98,8 +99,8 @@ pickUpItem gs =
         c <- getInventorySlot gs
         pure { newInventory: Map.insert c i gs.inventory, newItems: Map.delete gs.player gs.items, acquiredItem: i }
     in case maybeUpdated of
-         Nothing -> gs { logevent = Nothing }
-         Just { newInventory, newItems, acquiredItem } -> gs { inventory = newInventory, items = newItems, logevent = Just $ ItemEvent acquiredItem }
+         Nothing -> gs
+         Just { newInventory, newItems, acquiredItem } -> gs { inventory = newInventory, items = newItems, logevents = cons (ItemEvent acquiredItem) gs.logevents }
 
 -- monsters move towards the player, first x then y
 simpleMonsterUpdate :: GameState -> GameState

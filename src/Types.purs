@@ -38,7 +38,7 @@ type GameState =
  , fov :: FieldOfView
  , mobs :: Map Position Mob
  , furniture :: Map Position Furniture
- , logevent :: Maybe LogEvent -- Nothing == nothing to log
+ , logevents :: Array LogEvent -- log all the events
  }
 
 -- TODO: where should this live?

@@ -1,18 +1,22 @@
 module Graphics.Draw where
 
+import Data.Array (take, zip, range)
+import Data.Array.NonEmpty as NE
+import Data.Map (toUnfoldable)
+import Data.String.CodeUnits (singleton)
+import Data.String.Common (toLower)
+
 import Extra.Prelude
 
 import Constants (displayDimensions, tileDimensions, white)
-import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable)
-import Types.Mob (mobSprite)
 import Data.Sprite (glitch, player)
-import Types.Furniture (furnitureSprite)
-import Data.String.CodeUnits (singleton)
 import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..))
 import Graphics.Render (Context, drawSpriteToGrid, drawText, clear, setFillStyle)
+import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..))
+import Types.Furniture (furnitureSprite)
 import Types.Item (itemSprite, itemName)
+import Types.Mob (mobSprite)
+
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
 
@@ -73,6 +77,18 @@ drawMain ctx gs = do
     y' = y + div displayDimensions.height 2
 
 drawLog :: Context -> GameState -> Effect Unit
-drawLog ctx gs = case gs.logevent of
+drawLog ctx gs = sequence_ $ map drawLogItem (zip (range 1 logLines) (take logLines gs.logevents))
+  where
+    drawLogItem :: Tuple Int LogEvent -> Effect Unit
+    drawLogItem (Tuple index evt) = drawText ctx (logString evt) 53.0 (toNumber (index * 15))
+
+    logString :: LogEvent -> String
+    logString (ItemEvent item) = "Acquired " <> toLower (itemName item) <> "!"
+    logString _ = "Not implemented yet!"
+
+  {-case gs.logevent of
   Just (ItemEvent item) -> drawText ctx ("Acquired " <> itemName item <> "!") 53.0 0.0
-  _ -> pure unit
+  _ -> pure unit-}
+
+logLines :: Int
+logLines = 3
