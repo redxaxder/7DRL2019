@@ -9,8 +9,10 @@ import Extra.Prelude
 
 import Data.Map (Map)
 import Data.Map as Map
+import Partial.Unsafe (unsafePartial)
 
 import Data.Sprite (Sprite, spriteAt)
+import Data.Item (ItemType, stringToItemType)
 
 newtype MobType = MobType String
 derive instance eqMobType :: Eq MobType
@@ -21,27 +23,32 @@ type MobRecord =
   , name :: String
   , sprite :: Sprite
   , hp :: Int
+  , drop :: Maybe ItemType
   --, attributes :: Array Attribute
   }
 
 m :: Int -> Int -> String -> Int -> MobRecord
-m = mkMob
+m = mkMob Nothing
 
-mkMob :: Int -> Int -> String -> Int -> MobRecord
-mkMob x y name hp =
+n :: Int -> Int -> String -> Int -> String -> MobRecord
+n x y name hp drop = mkMob (Just drop) x y name hp
+
+mkMob :: (Maybe String) -> Int -> Int -> String -> Int -> MobRecord
+mkMob drop x y name hp = unsafePartial
   { mobType: MobType name
   , name
   , sprite: spriteAt x y
   , hp: hp
+  , drop: stringToItemType <$> drop
   }
 
 mobRecords :: Array MobRecord
 mobRecords =
-  [ m 0 1 "Bananamatronic Husk" 5
-  , m 5 0 "Monion"              5
-  , m 6 0 "Tomatosaurus"        5
-  , m 7 0 "Meatotaur"           5
-  , m 1 1 "Deep Lettuce"        5
+  [ n 5 0 "Monion"              5 "whole onion"
+  , n 6 0 "Tomatosaurus"        5 "whole tomato"
+  , n 7 0 "Meatotaur"           5 "raw meat"
+  , n 1 1 "Deep Lettuce"        5 "deep lettuce"
+  , m 0 1 "Bananamatronic Husk" 5
   ]
 
 mobs :: Array MobType

@@ -2,21 +2,23 @@ module Main where
 
 import Extra.Prelude
 
-import Atlas (getElement, move, Position)
-import Combat (doAttack, attackPlayer)
 import Control.Monad.Rec.Class (tailRec, Step(..))
-import Control.Monad.State (execState, State, get, modify_, modify)
-import Data.Array (cons, filter, find)
+import Control.Monad.State (execState, State, get, modify_)
+import Data.Array (cons, find)
+import Data.Array as Array
 import Data.Enum (enumFromTo)
-import Data.Map (delete, toUnfoldable, lookup)
+import Data.Map (delete, lookup)
 import Data.Map as Map
 import Data.Maybe (isJust)
 import Data.Set as Set
-import Data.Tile (blocksMovement, Tile(..))
-import Data.Tuple (fst, snd)
-import Direction (Direction(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Partial.Unsafe (unsafePartial)
+
+import Atlas (move, getElement, Position)
+import Combat (doAttack, attackPlayer)
+import Data.Tile (blocksMovement)
+import Direction (Direction(..))
 import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
@@ -25,10 +27,8 @@ import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
-import Partial.Unsafe (unsafePartial)
-import Types (GameState, LogEvent(..), Mob, FieldOfView)
-import Types.Item (itemName)
-import Types.Mob (Mob)
+import Types (GameState, LogEvent(..), Mob, liftMobState)
+import Types.Mob (position, moveMob)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -63,7 +63,7 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = monsterAction <<< pickUpItem <<< tailRec expand
+stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -123,10 +123,10 @@ passable gs pos = not ((blocksMovement $ getElement pos gs.atlas) || (pos == gs.
 -- if blocksMovement direction, then try next direction
 -- if neither, move into space
 monsterAction :: GameState -> GameState
-monsterAction gs = foldr individualMonsterAction gs ((toUnfoldable gs.mobs) :: Array (Tuple Position Mob))
+monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.values gs.mobs)
   where
-    individualMonsterAction :: Tuple Position Mob -> GameState -> GameState
-    individualMonsterAction (Tuple mobPos mob) gs' =
+    individualMonsterAction :: Mob -> GameState -> GameState
+    individualMonsterAction mob gs' = let mobPos = position mob in
       case playerAdjacent mobPos of
         Just dir -> attackPlayer gs' mob
         Nothing -> let 
@@ -150,3 +150,46 @@ monsterAction gs = foldr individualMonsterAction gs ((toUnfoldable gs.mobs) :: A
     playerAdjacentDirection :: Position -> Direction -> Boolean
     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
+
+
+
+
+doMobStuff :: GameState -> GameState
+doMobStuff gs = flip execState gs $ (Map.keys gs.mobs) # traverse_ \mobPos -> do
+  maction <- liftMobState mobPos (individualMonsterAction2)
+  case maction of
+    Nothing -> pure unit
+    Just action -> modify_ $ interpretMobAction action
+
+
+interpretMobAction :: MobAction -> GameState -> GameState
+interpretMobAction (MobAttack mob) gs = attackPlayer gs mob
+interpretMobAction (MobPass mob) gs = gs
+
+data MobAction = MobAttack Mob | MobPass Mob
+individualMonsterAction2 :: GameState -> State Mob MobAction
+individualMonsterAction2 gs = do
+  mob <- get
+  let mobPos = position mob
+  case playerAdjacent mobPos of
+    Just dir -> MobAttack <$> get
+    Nothing -> case findEmptySpace mobPos of
+      Just moveDir -> do
+        modify_ $ moveMob moveDir gs.atlas
+        MobPass <$> get
+      Nothing -> MobPass <$> get
+  where
+    playerAdjacent :: Position -> Maybe Direction
+    playerAdjacent = findAdjacent playerAdjacentDirection
+    
+    playerAdjacentDirection :: Position -> Direction -> Boolean
+    playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
+
+    findEmptySpace :: Position -> Maybe Direction
+    findEmptySpace = findAdjacent findEmptySpaceDirection
+
+    findEmptySpaceDirection :: Position -> Direction -> Boolean
+    findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
+      in not $ blocksMovement $ getElement targetPos gs.atlas
+
+  
