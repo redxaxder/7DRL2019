@@ -1,6 +1,7 @@
 module Data.Item
   ( ItemType
   , items
+  , orderable
   , getItemRecord
   , itemByChar
   , stringToItemType
@@ -9,6 +10,8 @@ module Data.Item
 
 import Extra.Prelude
 
+import Data.Array (filter)
+import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Foldable (find)
 import Data.Map (Map)
 import Data.Map as Map
@@ -27,28 +30,33 @@ type ItemRecord =
   , char :: Maybe Char
   , sprite :: Sprite
   , attributes :: Array Attribute
+  , canOrder :: Boolean
   }
 
 i :: Char -> Int -> Int -> String -> Array String -> ItemRecord
-i c = mkItemRecord (Just c)
+i c = mkItemRecord false (Just c)
 
 j :: Int -> Int -> String -> Array String -> ItemRecord
-j = mkItemRecord Nothing
+j = mkItemRecord false Nothing
 
-mkItemRecord :: Maybe Char -> Int -> Int -> String -> Array String -> ItemRecord
-mkItemRecord char x y name attributes =
+k :: Int -> Int -> String -> Array String -> ItemRecord
+k = mkItemRecord true Nothing
+
+mkItemRecord :: Boolean -> Maybe Char -> Int -> Int -> String -> Array String -> ItemRecord
+mkItemRecord canOrder char x y name attributes =
   { itemType: ItemType name
   , char
   , name
   , sprite: spriteAt x y
   , attributes: Attribute <$> attributes
+  , canOrder
   }
 
 itemRecords :: Array ItemRecord
 itemRecords =
-  [ j     1 2 "Tomato salad"     mempty
-  , j     2 2 "Soup"             mempty
-  , j     3 2 "Roast"            mempty
+  [ k     1 2 "Tomato salad"     mempty
+  , k     2 2 "Soup"             mempty
+  , k     3 2 "Roast"            mempty
   , j     4 2 "Whole tomato"     [ "tomato" ]
   , j     5 2 "Whole onion"      [ "onion" ]
   , j     6 2 "Raw meat"         [ "meat" ]
@@ -64,6 +72,9 @@ items = _.itemType <$> itemRecords
 
 itemMap :: Map ItemType ItemRecord
 itemMap = keyBy _.itemType itemRecords
+
+orderable :: NonEmptyArray ItemType
+orderable = unsafeFromJust $ fromArray $ filter (_.canOrder <<< getItemRecord) items
 
 getItemRecord :: ItemType -> ItemRecord
 getItemRecord t = unsafeFromJust $ Map.lookup t itemMap
