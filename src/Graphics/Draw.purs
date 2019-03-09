@@ -1,14 +1,12 @@
 module Graphics.Draw where
 
-import Data.Array (take, zip, range)
-import Data.Array.NonEmpty as NE
-import Data.Map (toUnfoldable)
-import Data.String.CodeUnits (singleton)
-import Data.String.Common (toLower)
-
 import Extra.Prelude
 
+import Data.Array (take, zip, range)
+import Data.Array.NonEmpty as NE
+import Data.String.CodeUnits (singleton)
 import Data.Map (Map, toUnfoldable)
+import Data.String.Common (toLower)
 
 import Atlas (Position)
 import Constants (displayDimensions, tileDimensions, white)

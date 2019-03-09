@@ -4,12 +4,12 @@ import Extra.Prelude
 
 import Atlas (Position(..), ChartId(..))
 import Data.Array (head)
-import Data.Map (Map, fromFoldable)
+import Data.Map (Map)
 import Data.Mob (mobs)
 import Map.Gen (initMap)
 import Random (newGen)
 import Types (GameState, Mob, customerStateFromGen)
-import Types.Mob (mkMob)
+import Types.Mob (mkMob, position)
 
 init :: Effect GameState
 init = do
@@ -43,8 +43,9 @@ exampleItems = fromFoldable
   ]
 -}
 exampleMobs :: Map Position Mob
-exampleMobs = fromFoldable
-  [ Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}} |> 
-      mkMob (unsafeFromJust $ head mobs)
-  ]
+exampleMobs = keyBy position [mob]
+  where 
+  mob = mkMob (unsafeFromJust $ head mobs) p
+  p = Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}}
+
 --}

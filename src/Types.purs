@@ -35,7 +35,7 @@ import Random (Gen)
 import Random.Gen (Random, chance, element, intRange, runRandom)
 import Types.Furniture (FurnitureType, Furniture (..))
 import Types.Item (Item (..), ItemType)
-import Types.Mob (Mob (..), MobType)
+import Types.Mob (Mob (..), MobType, position)
 
 type GameState =
   { player :: Position
@@ -50,6 +50,23 @@ type GameState =
   , logevents :: Array LogEvent -- log all the events
   }
 
+liftMobState :: forall a. Position -> (GameState -> State Mob a) -> State GameState (Maybe a)
+liftMobState p f = do
+  gs <- get
+  zoom (prop $ SProxy :: SProxy "mobs") $ do
+    mobMap <- get
+    case Map.lookup p mobMap of
+      Nothing -> pure Nothing
+      Just m -> let (Tuple a m') = runState (f gs) m
+                    p' = position m'
+                in if Map.member p' mobMap && (p' /= p)
+                    then pure Nothing
+                    else do
+                      modify_ $ Map.delete p
+                      modify_ $ Map.insert (position m') m'
+                      pure (Just a)
+
+
 -- TODO: where should this live?
 getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen :: Vector Int }
 getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
@@ -59,6 +76,7 @@ data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
   | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord)
+
 
 type MapGenHint = { rng :: Gen, region :: Region }
 
