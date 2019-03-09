@@ -39,7 +39,7 @@ type GameState =
  , fov :: FieldOfView
  , mobs :: Map Position Mob
  , furniture :: Map Position Furniture
- , logevent :: Maybe LogEvent -- Nothing == nothing to log
+ , logevents :: Array LogEvent -- log all the events
  }
 
 -- TODO: where should this live?
@@ -58,4 +58,4 @@ type Placeholder = { position :: Position, direction :: Direction, next :: MapGe
 
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
 
-data LogEvent = ItemEvent Item | CombatEvent Mob
+data LogEvent = ItemEvent Item | CombatEvent Mob | MonsterKilledEvent Mob

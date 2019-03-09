@@ -1,20 +1,24 @@
 module Graphics.Draw where
 
+import Data.Array (take, zip, range)
+import Data.Array.NonEmpty as NE
+import Data.Map (toUnfoldable)
+import Data.String.CodeUnits (singleton)
+import Data.String.Common (toLower)
+
 import Extra.Prelude
 
-import Data.Array.NonEmpty as NE
 import Data.Map (Map, toUnfoldable)
 
 import Atlas (Position)
 import Constants (displayDimensions, tileDimensions, white)
-import Types.Mob (mobSprite)
 import Data.Sprite (glitch, player)
-import Types.Furniture (furnitureSprite)
-import Data.String.CodeUnits (singleton)
 import Data.Tile (Tile, tileSprite)
-import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..))
 import Graphics.Render (Context, drawSpriteToGrid, drawText, clear, setFillStyle)
+import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..))
+import Types.Furniture (furnitureSprite)
 import Types.Item (itemSprite, itemName)
+import Types.Mob (mobSprite, mobName)
 
 visionRange :: Int -- TODO: move this to where it really lives
 visionRange = 10
@@ -27,26 +31,26 @@ draw ctx _ gs = drawMain ctx gs
 drawInventoryScreen :: Context -> Maybe { label:: Char, item :: Item } -> GameState  -> Effect Unit
 drawInventoryScreen ctx Nothing gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
-  drawText ctx "Inventory" 53.0 0.0
+  drawText ctx "Inventory" leftMargin 0.0
   void $ flip traverseWithIndex items \ix (Tuple c item) ->
     drawText ctx
     (singleton c <> ") " <> itemName item)
-    53.0
+    leftMargin
     (toNumber (tileDimensions.height * (ix + 1)))
 
 drawInventoryScreen ctx (Just {label, item}) gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
-  --clearRegion ctx { x: 53.0, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (length items + 1)}
+  --clearRegion ctx { x: leftMargin, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (length items + 1)}
   drawText ctx
     (itemName item)
-    53.0
+    leftMargin
     0.0
 
 drawStartScreen :: Context -> Effect Unit
 drawStartScreen ctx = do
   clear ctx
   setFillStyle ctx white
-  drawText ctx "Press any key to start" 53.0 154.0
+  drawText ctx "Press any key to start" leftMargin 154.0
 
 drawMain :: Context -> GameState -> Effect Unit
 drawMain ctx gs = do
@@ -77,6 +81,22 @@ drawMain ctx gs = do
     y' = y + div displayDimensions.height 2
 
 drawLog :: Context -> GameState -> Effect Unit
-drawLog ctx gs = case gs.logevent of
-  Just (ItemEvent item) -> drawText ctx ("Acquired " <> itemName item <> "!") 53.0 0.0
-  _ -> pure unit
+drawLog ctx gs = sequence_ $ map drawLogItem (zip (range 1 logLines) (take logLines gs.logevents))
+  where
+    drawLogItem :: Tuple Int LogEvent -> Effect Unit
+    drawLogItem (Tuple index evt) = drawText ctx (logString evt) leftMargin (toNumber (index * 15))
+
+    logString :: LogEvent -> String
+    logString (ItemEvent item) = "Acquired " <> toLower (itemName item) <> "!"
+    logString (CombatEvent mob) = "Hit " <> toLower (mobName mob) <> "!"
+    logString (MonsterKilledEvent mob) = "Killed " <> toLower (mobName mob) <> "!"
+
+  {-case gs.logevent of
+  Just (ItemEvent item) -> drawText ctx ("Acquired " <> itemName item <> "!") leftMargin 0.0
+  _ -> pure unit-}
+
+logLines :: Int
+logLines = 3
+
+leftMargin :: Number
+leftMargin = 53.0

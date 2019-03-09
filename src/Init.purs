@@ -23,7 +23,7 @@ init = do
        , placeholders
        , mobs: exampleMobs
        , player
-       , logevent: Nothing
+       , logevents: mempty
        }
 
 {-

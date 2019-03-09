@@ -2,6 +2,7 @@ module Main where
 
 import Extra.Prelude
 
+import Data.Array (cons)
 import Data.Enum (enumFromTo)
 import Data.Map (delete)
 import Data.Map as Map
@@ -59,7 +60,9 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = stepMobs <<< pickUpItem <<< tailRec expand
+stepEnvironment = tailRec expand
+  >>> pickUpItem
+  -- >>> stepMobs
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -100,8 +103,8 @@ pickUpItem gs =
         c <- getInventorySlot gs
         pure { newInventory: Map.insert c i gs.inventory, newItems: Map.delete gs.player gs.items, acquiredItem: i }
     in case maybeUpdated of
-         Nothing -> gs { logevent = Nothing }
-         Just { newInventory, newItems, acquiredItem } -> gs { inventory = newInventory, items = newItems, logevent = Just $ ItemEvent acquiredItem }
+         Nothing -> gs
+         Just { newInventory, newItems, acquiredItem } -> gs { inventory = newInventory, items = newItems, logevents = cons (ItemEvent acquiredItem) gs.logevents }
 
 stepMobs :: GameState -> GameState
 stepMobs gs = 
