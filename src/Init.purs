@@ -42,7 +42,9 @@ exampleItems = fromFoldable
 -}
 exampleMobs :: Map Position Mob
 exampleMobs = fromFoldable
-  [ Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}} |> 
+  [ Position {chartId: ChartId 0, localPosition: V {x: 1, y: 2}} |> 
+      mkMob (unsafeFromJust $ head mobs)
+  , Position {chartId: ChartId 0, localPosition: V {x: 3, y: 2}} |> 
       mkMob (unsafeFromJust $ head mobs)
   ]
 --}
