@@ -3,34 +3,32 @@ module Main where
 import Extra.Prelude
 
 import Control.Monad.Rec.Class (tailRec, Step(..))
-import Control.Monad.State (execState, State, get, modify_, modify)
-import Data.Array (cons, filter, find)
+import Control.Monad.State (execState, State, get, modify_)
+import Data.Array (cons, find)
 import Data.Array as Array
-import Data.Map (delete, toUnfoldable, lookup)
+import Data.Enum (enumFromTo)
+import Data.Map (delete, lookup)
 import Data.Map as Map
 import Data.Maybe (isJust)
 import Data.Set as Set
-import Data.Symbol (SProxy(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Partial.Unsafe (unsafePartial)
+
+import Atlas (move, getElement, Position)
+import Combat (doAttack, attackPlayer)
+import Data.Tile (blocksMovement)
+import Direction (Direction(..))
 import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
-import Map.Gen (expandMap)
-import Combat (doAttack)
-import Data.Enum (enumFromTo)
-import Combat (doAttack, attackPlayer)
-import Data.Tile (blocksMovement, Tile(..))
-import Data.Tuple (fst, snd)
-import Direction (Direction(..))
-import Types (GameState, LogEvent(..), Mob, FieldOfView, liftMobState)
-import Types.Item (itemName)
-import Types.Mob (Mob, position, moveMob)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
-import Partial.Unsafe (unsafePartial)
+import Map.Gen (expandMap)
+import Types (GameState, LogEvent(..), Mob, liftMobState)
+import Types.Mob (position, moveMob)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -159,7 +157,7 @@ monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.va
 doMobStuff :: GameState -> GameState
 doMobStuff gs = flip execState gs $ (Map.keys gs.mobs) # traverse_ \mobPos -> do
   maction <- liftMobState mobPos (individualMonsterAction2)
-  case spy "a" maction of
+  case maction of
     Nothing -> pure unit
     Just action -> modify_ $ interpretMobAction action
 

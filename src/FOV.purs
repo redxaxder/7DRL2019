@@ -5,7 +5,6 @@ import Extra.Prelude
 import Data.Array (catMaybes, cons, nubBy, singleton, sortBy)
 import Data.Array.NonEmpty (NonEmptyArray, cons', fromArray, head, toArray)
 import Data.Filterable (filter)
-import Data.Foldable (any)
 import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Map as M
