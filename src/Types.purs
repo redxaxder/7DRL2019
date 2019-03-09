@@ -56,4 +56,4 @@ type Placeholder = { position :: Position, direction :: Direction, next :: MapGe
 
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }
 
-data LogEvent = ItemEvent Item | CombatEvent Mob
+data LogEvent = ItemEvent Item | CombatEvent Mob | MonsterKilledEvent Mob
