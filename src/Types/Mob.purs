@@ -7,6 +7,7 @@ import Extra.Prelude
 
 import Data.Mob (MobType, getMobRecord)
 import Data.Sprite (Sprite)
+import Types.Item (Item, mkItem)
 
 newtype Mob = Mob { mobType :: MobType, hp :: Int } -- TODO: Add relevant mob state here
 derive instance newtypeMob :: Newtype Mob _
@@ -31,3 +32,6 @@ mobSprite = _.sprite <<< getMobRecord <<< mobType
 
 mobType :: Mob -> MobType
 mobType (Mob {mobType: t}) = t
+
+mobDrop :: Mob -> Maybe Item
+mobDrop = map mkItem <<< _.drop <<< getMobRecord <<< mobType

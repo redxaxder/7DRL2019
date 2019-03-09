@@ -52,6 +52,7 @@ data UIRenderData = MainGame
   | InventoryScreen (Maybe {label :: Char, item :: Item})
   | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord)
 
+
 type MapGenHint = { rng :: Gen, region :: Region }
 
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
