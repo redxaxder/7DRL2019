@@ -3,10 +3,7 @@ module Main where
 import Extra.Prelude
 
 import Atlas (getElement, move, Position)
-import Atlas (getElement, move, Position)
-import Combat (doAttack)
 import Combat (doAttack, attackPlayer)
-import Control.Monad.Rec.Class (tailRec, Step(..))
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Control.Monad.State (execState, State, get, modify_, modify)
 import Data.Array (cons, filter, find)
@@ -15,7 +12,6 @@ import Data.Map (delete, toUnfoldable, lookup)
 import Data.Map as Map
 import Data.Maybe (isJust)
 import Data.Set as Set
-import Data.Tile (blocksMovement)
 import Data.Tile (blocksMovement, Tile(..))
 import Data.Tuple (fst, snd)
 import Direction (Direction(..))
@@ -133,23 +129,24 @@ monsterAction gs = foldr individualMonsterAction gs ((toUnfoldable gs.mobs) :: A
     individualMonsterAction (Tuple mobPos mob) gs' =
       case playerAdjacent mobPos of
         Just dir -> attackPlayer gs' mob
-        Nothing -> case findEmptySpace mobPos of
-          Just moveDir ->
-            let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
-                targetPos = move moveDir gs'.atlas mobPos
-            in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
-          Nothing -> gs'
-        
+        Nothing -> let 
+            findEmptySpace :: Position -> Maybe Direction
+            findEmptySpace = findAdjacent findEmptySpaceDirection
+
+            findEmptySpaceDirection :: Position -> Direction -> Boolean
+            findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
+              -- in not $ blocksMovement $ getElement targetPos gs.atlas
+              in passable gs' targetPos
+          in case findEmptySpace mobPos of
+            Just moveDir ->
+              let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
+                  targetPos = move moveDir gs'.atlas mobPos
+              in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
+            Nothing -> gs'
+          
     playerAdjacent :: Position -> Maybe Direction
     playerAdjacent = findAdjacent playerAdjacentDirection
     
     playerAdjacentDirection :: Position -> Direction -> Boolean
     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
-    findEmptySpace :: Position -> Maybe Direction
-    findEmptySpace = findAdjacent findEmptySpaceDirection
-
-    findEmptySpaceDirection :: Position -> Direction -> Boolean
-    findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
-      -- in not $ blocksMovement $ getElement targetPos gs.atlas
-      in passable gs targetPos
