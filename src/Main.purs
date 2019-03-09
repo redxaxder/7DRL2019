@@ -6,20 +6,19 @@ import Control.Monad.Rec.Class (tailRec, Step(..))
 import Control.Monad.State (execState, State, get, modify_, modify)
 import Data.Array (cons, filter, find)
 import Data.Array as Array
-import Data.Map (delete, toUnfoldable)
+import Data.Map (delete, toUnfoldable, lookup)
 import Data.Map as Map
+import Data.Maybe (isJust)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
 import Map.Gen (expandMap)
-import Partial.Unsafe (unsafePartial)
-
-import Atlas (getElement, move, Position)
+import Combat (doAttack)
 import Data.Enum (enumFromTo)
-import FOV (visibleTiles)
 import Combat (doAttack, attackPlayer)
 import Data.Tile (blocksMovement, Tile(..))
 import Data.Tuple (fst, snd)
@@ -31,6 +30,7 @@ import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
+import Partial.Unsafe (unsafePartial)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -114,7 +114,8 @@ findAdjacent :: (Position -> Direction -> Boolean)
                 -> Maybe Direction
 findAdjacent f pos = find (f pos) [R, L, U, D]
 
-
+passable :: GameState -> Position -> Boolean
+passable gs pos = not ((blocksMovement $ getElement pos gs.atlas) || (pos == gs.player) || (isJust $ lookup pos gs.mobs))
 -- Mob -> Tuple (Mob a)
 -- liftMobStuff :: State Mob a -> State GameState a
 -- liftMobStuff = todo
@@ -130,25 +131,27 @@ monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.va
     individualMonsterAction mob gs' = let mobPos = position mob in
       case playerAdjacent mobPos of
         Just dir -> attackPlayer gs' mob
-        Nothing -> case findEmptySpace mobPos of
-          Just moveDir ->
-            let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
-                targetPos = move moveDir gs'.atlas mobPos
-            in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
-          Nothing -> gs'
-        
+        Nothing -> let 
+            findEmptySpace :: Position -> Maybe Direction
+            findEmptySpace = findAdjacent findEmptySpaceDirection
+
+            findEmptySpaceDirection :: Position -> Direction -> Boolean
+            findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
+              -- in not $ blocksMovement $ getElement targetPos gs.atlas
+              in passable gs' targetPos
+          in case findEmptySpace mobPos of
+            Just moveDir ->
+              let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
+                  targetPos = move moveDir gs'.atlas mobPos
+              in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
+            Nothing -> gs'
+          
     playerAdjacent :: Position -> Maybe Direction
     playerAdjacent = findAdjacent playerAdjacentDirection
     
     playerAdjacentDirection :: Position -> Direction -> Boolean
     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
-    findEmptySpace :: Position -> Maybe Direction
-    findEmptySpace = findAdjacent findEmptySpaceDirection
-
-    findEmptySpaceDirection :: Position -> Direction -> Boolean
-    findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
-      in not $ blocksMovement $ getElement targetPos gs.atlas
 
 
 
