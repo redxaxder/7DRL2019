@@ -3,36 +3,37 @@ module Main where
 import Extra.Prelude
 
 import Atlas (getElement, move, Position)
+import Atlas (getElement, move, Position)
+import Combat (doAttack)
 import Combat (doAttack, attackPlayer)
 import Control.Monad.Rec.Class (tailRec, Step(..))
+import Control.Monad.Rec.Class (tailRec, Step(..))
+import Control.Monad.State (execState, State, get, modify_, modify)
 import Data.Array (cons, filter, find)
+import Data.Array as Array
 import Data.Enum (enumFromTo)
 import Data.Map (delete, toUnfoldable)
 import Data.Map as Map
 import Data.Set as Set
+import Data.Symbol (SProxy(..))
+import Data.Tile (blocksMovement)
 import Data.Tile (blocksMovement, Tile(..))
 import Data.Tuple (fst, snd)
 import Direction (Direction(..))
-import Control.Monad.State (execState, State, get, modify_, modify)
-import Control.Monad.Rec.Class (tailRec, Step(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
-import Partial.Unsafe (unsafePartial)
-
-import Atlas (getElement, move, Position)
-import Combat (doAttack)
-import Data.Tile (blocksMovement)
-import FOV (visibleTiles)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
+import Partial.Unsafe (unsafePartial)
 import Types (GameState, LogEvent(..), Mob, FieldOfView)
 import Types.Item (itemName)
-import Types.Mob (Mob)
+import Types.Mob (Mob, position)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -126,10 +127,10 @@ findAdjacent f pos = find (f pos) [R, L, U, D]
 -- if blocksMovement direction, then try next direction
 -- if neither, move into space
 monsterAction :: GameState -> GameState
-monsterAction gs = foldr individualMonsterAction gs ((toUnfoldable gs.mobs) :: Array (Tuple Position Mob))
+monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.values gs.mobs)
   where
-    individualMonsterAction :: Tuple Position Mob -> GameState -> GameState
-    individualMonsterAction (Tuple mobPos mob) gs' =
+    individualMonsterAction :: Mob -> GameState -> GameState
+    individualMonsterAction mob gs' = let mobPos = position mob in
       case playerAdjacent mobPos of
         Just dir -> attackPlayer gs' mob
         Nothing -> case findEmptySpace mobPos of

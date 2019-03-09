@@ -50,6 +50,11 @@ type GameState =
   , logevents :: Array LogEvent -- log all the events
   }
 
+liftMobState :: forall a. Position -> State Mob a -> State GameState a
+liftMobState p s = zoom (prop $ SProxy :: SProxy "mobs") 
+
+
+
 -- TODO: where should this live?
 getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen :: Vector Int }
 getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
