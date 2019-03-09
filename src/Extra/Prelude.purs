@@ -28,15 +28,19 @@ module Extra.Prelude
   , repeatedly
   , todo
   , unsafeFromJust
+
+  , while
+  , pop
   ) where
 
 import Prelude
 
+import Control.Monad.State (State, get, put)
 import Control.Monad.Rec.Class (Step (..), tailRec)
-import Data.Array (groupBy, sortBy, zip)
+import Data.Array (groupBy, sortBy, zip, findIndex, deleteAt, index)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
-import Data.Foldable (class Foldable, null, length, elem, foldr, foldl, sum, any)
+import Data.Foldable (class Foldable, null, length, elem, foldr, foldl, sum, any, foldMap)
 import Data.Map (Map, alter, empty)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)
@@ -132,4 +136,14 @@ keyBy' :: forall k v. Ord k => (v -> Maybe k) -> Array v -> Map k v
 keyBy' f vs = Map.fromFoldable $ vs >>= \v ->
   maybe [] (\k-> [Tuple k v]) (f v)
 
+pop :: forall a. (a -> Boolean) -> State (Array a) (Maybe a)
+pop f = do
+  arr <- get
+  case findIndex f arr of
+    Nothing -> pure Nothing
+    Just i -> do
+      put (unsafeFromJust $ deleteAt i arr)
+      pure (index arr i)
 
+while :: forall m a. Monad m => Monoid a => m Boolean -> m a -> m a
+while mp ma = mp >>= \p -> if p then (<>) <$> ma <*> while mp ma else pure mempty
