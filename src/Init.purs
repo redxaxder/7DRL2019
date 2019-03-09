@@ -8,13 +8,14 @@ import Data.Map (Map, fromFoldable)
 import Data.Mob (mobs)
 import Map.Gen (initMap)
 import Random (newGen)
-import Types (GameState, Mob)
+import Types (GameState, Mob, customerStateFromGen)
 import Types.Mob (mkMob)
 
 init :: Effect GameState
 init = do
-  gen <- newGen
-  let { atlas, player, placeholders, furniture } = initMap gen
+  mapGen <- newGen
+  customerGen <- newGen
+  let { atlas, player, placeholders, furniture } = initMap mapGen
   pure { atlas
        , fov: mempty
        , furniture
@@ -24,6 +25,7 @@ init = do
        , mobs: exampleMobs
        , player
        , logevents: mempty
+       , customerState: customerStateFromGen customerGen
        }
 
 {-

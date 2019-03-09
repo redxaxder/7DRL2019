@@ -80,7 +80,7 @@ branch = Random $ \gen ->
       }
 
 chance :: Int -> Random Boolean
-chance p = (>) p <$> intRange 0 100
+chance p = (>=) p <$> intRange 1 100
 
 intRange :: Int -> Int -> Random Int
 intRange low high = flip map nextInt $ \i -> (i `mod` (high - low + 1)) + low
