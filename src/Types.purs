@@ -20,6 +20,7 @@ import Data.Array (catMaybes)
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
 import Data.Maps (MapData (..))
+import Data.Recipe (RecipeRecord)
 import Data.Region (Region (..))
 import Data.Sprite (Sprite (..))
 import Data.Tile (Tile (..))
@@ -49,9 +50,7 @@ getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
 data UIRenderData = MainGame
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item})
-  | Crafting (Array { label :: Char, item :: Item }) (Array Recipe)
-
-data Recipe = Recipe -- TODO
+  | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord)
 
 type MapGenHint = { rng :: Gen, region :: Region }
 

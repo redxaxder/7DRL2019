@@ -2,8 +2,9 @@ module UserInterface where
 
 import Extra.Prelude
 
-import Data.Array (cons, delete)
-import Data.Foldable (find)
+import Data.Array (cons, delete, filter)
+import Data.Array as Array
+import Data.Foldable (find, all)
 import Data.Map as Map
 import Data.String.CodePoints (stripPrefix)
 import Data.String.CodeUnits (toChar)
@@ -11,7 +12,9 @@ import Data.String (toLower)
 import Data.String.Pattern (Pattern (..))
 
 import Atlas (move)
+import Data.Recipe (getRecipes, recipeCanUse)
 import Types (GameState, UIRenderData (..), Item)
+import Types.Item (itemType)
 import Intent (Action (..))
 import Direction (Direction (..))
 import Types.Furniture (counter, furnitureType)
@@ -50,6 +53,7 @@ main gs = AwaitingInput { uiRender: MainGame, next }
     next "KeyI"       = inventory gs
     next "Space"      = GameAction { uiAction: Pass, next: main }
     next "Period"     = GameAction { uiAction: Pass, next: main }
+    next "KeyC"       = crafting gs mempty
     next _            = main gs
 
 moveOrCraft :: GameState -> Direction -> UI
@@ -62,8 +66,10 @@ moveOrCraft gs d =
                                else crafting gs mempty
 
 crafting :: GameState -> Array { label :: Char, item :: Item } -> UI
-crafting gs selected = AwaitingInput { uiRender: Crafting selected mempty, next }
+crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes, next }
   where
+    shownRecipes = getRecipes (Array.fromFoldable $ itemType <$> Map.values gs.inventory)
+       # filter \r -> all (recipeCanUse r) (itemType <<< _.item <$> selected)
     next "Escape" = main gs
     next "Enter" = main gs
     next "Space" = main gs -- TODO: craft the item!

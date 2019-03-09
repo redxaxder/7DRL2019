@@ -4,6 +4,7 @@ module Data.Furniture
   , furniture
   , furnitureByChar
   , getFurnitureRecord
+  , stringToFurnitureType
   )
   where
 
@@ -11,6 +12,8 @@ import Extra.Prelude
 
 import Data.Map (Map)
 import Data.Map as Map
+import Data.Foldable (find)
+import Data.String.Common (toLower)
 
 import Data.Attribute (Attribute (..))
 import Data.Sprite (Sprite, spriteAt)
@@ -59,3 +62,6 @@ getFurnitureRecord t = unsafeFromJust $ Map.lookup t furnitureMap
 
 furnitureByChar :: Map Char FurnitureType
 furnitureByChar = keyBy (_.char <<< getFurnitureRecord) furniture
+
+stringToFurnitureType :: Partial => String -> FurnitureType
+stringToFurnitureType name = fromJust $ furniture # find \item -> toLower (getFurnitureRecord item).name == toLower name
