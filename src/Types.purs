@@ -13,7 +13,7 @@ module Types
 
 import Extra.Prelude
 
-import Control.Monad.State (State, modify_)
+import Control.Monad.State (State, modify_, get, runState)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Array (catMaybes)
