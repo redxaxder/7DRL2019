@@ -34,3 +34,6 @@ doItemDrop pos m = case mobDrop m of
   Nothing -> pure unit
   Just d -> void $ modify \gs -> gs { items = singleton pos d <> gs.items }
 
+-- just log for now, there is no player hp
+attackPlayer :: GameState -> Mob -> GameState
+attackPlayer gs mob = gs { logevents = cons (PlayerAttacked mob) gs.logevents }

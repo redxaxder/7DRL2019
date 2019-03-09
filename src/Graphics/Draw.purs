@@ -90,6 +90,7 @@ drawLog ctx gs = sequence_ $ map drawLogItem (zip (range 1 logLines) (take logLi
     logString (ItemEvent item) = "Acquired " <> toLower (itemName item) <> "!"
     logString (CombatEvent mob) = "Hit " <> toLower (mobName mob) <> "!"
     logString (MonsterKilledEvent mob) = "Killed " <> toLower (mobName mob) <> "!"
+    logString (PlayerAttacked mob) = "Hit by " <> toLower (mobName mob) <> "!"
 
   {-case gs.logevent of
   Just (ItemEvent item) -> drawText ctx ("Acquired " <> itemName item <> "!") leftMargin 0.0
