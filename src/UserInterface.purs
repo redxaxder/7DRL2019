@@ -14,10 +14,10 @@ import Data.String.Pattern (Pattern (..))
 
 import Atlas (move)
 import Data.Recipe (getRecipes, recipeCanUse)
+import Direction (Direction (..))
 import Types (GameState, UIRenderData (..), Item, UIHint(..), Action(..), canServe)
 import Types.Item (itemType)
-import Direction (Direction (..))
-import Types.Furniture (counter, furnitureType)
+import Types.Furniture (FurnitureType, counter, furnitureType)
 
 import Data.Map (lookup)
 -- Javascript key codes here: https://keycode.info/
@@ -45,7 +45,7 @@ mainUIHints =
   , UIHint "KeyI" "Inventory"
   , UIHint "Period" "Pass"
   ]
-  
+
 main :: GameState -> UI
 main gs = AwaitingInput { uiRender: MainGame mainUIHints, next }
   where
@@ -60,20 +60,21 @@ main gs = AwaitingInput { uiRender: MainGame mainUIHints, next }
     next "KeyI"       = inventory gs
     next "Space"      = GameAction { uiAction: Pass, next: main }
     next "Period"     = GameAction { uiAction: Pass, next: main }
-    next "KeyC"       = crafting gs mempty
+    next "KeyC"       = crafting gs Nothing mempty
     next _            = main gs
 
 moveOrCraft :: GameState -> Direction -> UI
 moveOrCraft gs d =
   let targetPos = move d gs.atlas gs.player
    in case Map.lookup targetPos gs.furniture of
-           Nothing -> GameAction { uiAction: (Move d), next: main }
-           Just furniture -> if furnitureType furniture == counter
-                               then chooseItemToServe gs
-                               else crafting gs mempty
+        Nothing -> GameAction { uiAction: (Move d), next: main }
+        Just furniture ->
+          if furnitureType furniture == counter
+            then chooseItemToServe gs
+            else crafting gs (Just $ furnitureType furniture) mempty
 
 chooseItemHints :: Array UIHint
-chooseItemHints = 
+chooseItemHints =
   [ UIHint "Escape" "Back"
   ]
 
@@ -96,21 +97,26 @@ craftingUIHints =
   , UIHint "enter" "Craft"
   ]
 
-crafting :: GameState -> Array { label :: Char, item :: Item } -> UI
-crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes craftingUIHints, next }
+crafting ::
+  GameState ->
+  Maybe FurnitureType ->
+  Array { label :: Char, item :: Item } ->
+  UI
+crafting gs furniture selected = AwaitingInput { uiRender, next }
   where
+    uiRender = Crafting selected shownRecipes craftingUIHints furniture
     shownRecipes = getRecipes (Array.fromFoldable $ itemType <$> Map.values gs.inventory)
        # filter \r -> all (recipeCanUse r) (itemType <<< _.item <$> selected)
     next "Escape" = main gs
     next "Enter" = main gs
     next "Space" = main gs -- TODO: craft the item!
-    next key = fromMaybe (crafting gs selected) $ do
+    next key = fromMaybe (crafting gs furniture selected) $ do
       label <- getCharacter key
       item <- Map.lookup label gs.inventory
       let selected' = case find (\x -> x.label == label) selected of
                         Nothing -> cons { label, item } selected
                         Just x -> delete x selected
-      pure $ crafting gs selected'
+      pure $ crafting gs furniture selected'
 
 inventoryUIHints :: Array UIHint
 inventoryUIHints =
@@ -130,7 +136,7 @@ inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing inventoryUIHint
 subInventoryUIHints :: Array UIHint
 subInventoryUIHints =
   [ UIHint "KeyD" "Drop"
-  , UIHint "Escape" "Deselect" 
+  , UIHint "Escape" "Deselect"
   ]
 
 subInventory :: GameState -> Char -> Item -> UI

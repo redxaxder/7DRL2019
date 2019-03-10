@@ -2,6 +2,7 @@ module Extra.Prelude
   ( module Prelude
   , module Data.Either
   , module Data.Foldable
+  , module Data.FoldableWithIndex
   , module Data.Maybe
   , module Data.Newtype
   , module Data.Traversable
@@ -25,12 +26,11 @@ module Extra.Prelude
   , groupToMap
   , keyBy
   , keyBy'
+  , pop
   , repeatedly
   , todo
   , unsafeFromJust
-
   , while
-  , pop
   ) where
 
 import Prelude
@@ -40,7 +40,8 @@ import Control.Monad.Rec.Class (Step (..), tailRec)
 import Data.Array (groupBy, sortBy, zip, findIndex, deleteAt, index)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
-import Data.Foldable (class Foldable, null, length, elem, foldr, foldl, sum, any, foldMap)
+import Data.Foldable (class Foldable, null, length, elem, foldr, foldl, sum, any, foldMap, intercalate)
+import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.Map (Map, alter, empty)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)

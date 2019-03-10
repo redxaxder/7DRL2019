@@ -18,7 +18,6 @@ import Data.Array (catMaybes, find)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (isJust)
-import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.Lens.Zoom (zoom)
 import Data.Symbol (SProxy(..))
@@ -26,14 +25,13 @@ import Data.Symbol (SProxy(..))
 import Atlas (Atlas, Position)
 import Data.Attribute (Attribute (..))
 import Data.Maps (MapData (..))
-import Data.Item (orderable)
 import Data.Recipe (RecipeRecord)
 import Data.Region (Region (..))
 import Data.Sprite (Sprite (..))
 import Data.Tile (Tile (..))
 import Direction (Direction)
 import Random (Gen)
-import Random.Gen (Random, chance, element, intRange, runRandom)
+import Types.Customer (CustomerState(..), Reward(..))
 import Types.Furniture (FurnitureType, Furniture (..))
 import Types.Item (Item (..), ItemType)
 import Types.Mob (Mob (..), MobType, position)
@@ -79,7 +77,11 @@ data UIRenderData
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item}) (Array UIHint)
   | ServeCustomerScreen (Array UIHint)
-  | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord) (Array UIHint)
+  | Crafting
+      (Array { label :: Char, item :: Item })
+      (Array RecipeRecord)
+      (Array UIHint)
+      (Maybe FurnitureType)
 
 type MapGenHint = { rng :: Gen, region :: Region }
 
@@ -113,15 +115,6 @@ liftInventoryState = zoom $ prop (SProxy :: SProxy "inventory")
 liftCustomerState :: forall a. State CustomerState a -> State GameState a
 liftCustomerState = zoom $ prop (SProxy :: SProxy "customerState")
 
-type Customer =
-    { order     :: ItemType
-    , turnsLeft :: Int
-    , reward    :: Reward
-    }
-
-data Reward = None | Multiple (Array Reward)
-derive instance eqReward :: Eq Reward
-
 applyReward :: Reward -> GameState -> GameState
 applyReward None = identity
 applyReward (Multiple rewards) =
@@ -132,67 +125,10 @@ applyReward' = do
   gs <- get
   let CustomerState cs = gs.customerState
   cs.pending # maybe (pure unit) (modify_ <<< applyReward)
-  let newCS = CustomerState $ cs {pending = Nothing}
-  put $ gs {customerState = newCS}
-
-
-
-newtype CustomerState = CustomerState
-  { rng :: Gen
-  , customers :: Array Customer
-  , pending :: Maybe Reward
-  }
-
-derive instance newtypeCustomerState :: Newtype CustomerState _
-
-customerStateFromGen :: Gen -> CustomerState
-customerStateFromGen rng = CustomerState { rng, customers: [], pending: Nothing }
+  put $ gs { customerState = CustomerState (cs { pending = Nothing }) }
 
 canServe :: Item -> GameState -> Boolean
 canServe item@(Item { itemType }) { customerState: CustomerState cs } =
   isJust $ find (\c -> itemType == c.order) cs.customers
-
-serveCustomer :: Item -> State CustomerState Unit
-serveCustomer item@(Item { itemType }) = do
-  CustomerState cs <- get
-  case cs.pending of
-    Just _ -> pure unit
-    Nothing -> do
-      customer <- zoom (prop (SProxy :: SProxy "customers") >>> _Newtype) (pop (\c -> itemType == c.order))
-      let maybeReward = map _.reward customer
-      put <<< CustomerState $ cs { pending = maybeReward }
-
-tickCustomers :: State CustomerState Unit
-tickCustomers = modify_ \(CustomerState cs) ->
-  let
-
-    rollCustomers :: Random (Array Customer)
-    rollCustomers = while (chance 2) (map pure rollCustomer)
-
-    rollOrder :: Random ItemType
-    rollOrder = element orderable
-
-    rollTurnsLeft :: ItemType -> Random Int
-    rollTurnsLeft _ = intRange 100 200
-
-    rollReward :: ItemType -> Random Reward
-    rollReward _ = pure None
-
-    rollCustomer :: Random Customer
-    rollCustomer = do
-      order <- rollOrder
-      turnsLeft <- rollTurnsLeft order
-      reward <- rollReward order
-      pure { order, turnsLeft, reward }
-
-    { result, nextGen } = cs.rng # runRandom rollCustomers
-
-  in
-  CustomerState { rng: nextGen, customers: cs.customers <> result, pending: cs.pending }
-
-getCustomers :: State CustomerState (Array Customer)
-getCustomers = do
-  CustomerState cs <- get
-  pure cs.customers
 
 data Action = Move Direction | Drop Char | Serve Char | Pass
