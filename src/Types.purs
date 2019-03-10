@@ -74,12 +74,12 @@ getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen 
 getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
   map (\a -> { a, screen }) $ Map.lookup absolute m
 
-data UIRenderData = MainGame (Array UIHint)
+data UIRenderData
+  = MainGame (Array UIHint)
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item}) (Array UIHint)
   | ServeCustomerScreen (Array UIHint)
   | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord) (Array UIHint)
-
 
 type MapGenHint = { rng :: Gen, region :: Region }
 
@@ -194,3 +194,5 @@ getCustomers :: State CustomerState (Array Customer)
 getCustomers = do
   CustomerState cs <- get
   pure cs.customers
+
+data Action = Move Direction | Drop Char | Serve Char | Pass

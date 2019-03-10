@@ -2,7 +2,7 @@ module Graphics.Render where
 
 import Extra.Prelude
 
-import Constants (tileDimensions, canvasDimensions, font, white, black, Color(..))
+import Constants (tileDimensions, canvasDimensions, font, white, black, Color(..), displayDimensions)
 import Control.Monad.Maybe.Trans (runMaybeT, MaybeT(..))
 import Control.Monad.Trans.Class (lift)
 import Effect.Aff (Aff, makeAff)
@@ -42,12 +42,16 @@ drawSpriteToGrid (Context {context, spritesheet}) (Sprite { offsetX, offsetY }) 
     { width, height } = tileDimensions
     sourceX = toNumber (offsetX * width)
     sourceY = toNumber (offsetY * height)
-    canvasX = toNumber (x * width)
+    canvasX = 180.0 + toNumber (x * width)
     canvasY = toNumber (y * height)
     w = toNumber width
     h = toNumber height
   in
-  Canvas.drawImageFull context spritesheet sourceX sourceY w h canvasX canvasY w h
+  when
+    ( 0 <= x && x < displayDimensions.width
+      && 0 <= y && y < displayDimensions.height
+      )
+    (Canvas.drawImageFull context spritesheet sourceX sourceY w h canvasX canvasY w h)
 
 charWidth :: Number
 charWidth = 10.0
