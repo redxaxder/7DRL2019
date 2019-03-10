@@ -5,7 +5,6 @@ import Extra.Prelude
 import Control.MonadZero (guard)
 import Data.Array (cons, delete, filter)
 import Data.Array as Array
-import Data.Foldable (find, all)
 import Data.Map as Map
 import Data.String.CodePoints (stripPrefix)
 import Data.String.CodeUnits (toChar)
@@ -13,7 +12,7 @@ import Data.String (toLower)
 import Data.String.Pattern (Pattern (..))
 
 import Atlas (move)
-import Data.Recipe (getRecipes, recipeCanUse)
+import Data.Recipe (getRecipes, recipeCanUse, canCraft)
 import Direction (Direction (..))
 import Types (GameState, UIRenderData (..), Item, UIHint(..), Action(..), canServe)
 import Types.Item (itemType)
@@ -92,9 +91,9 @@ chooseItemToServe gs = AwaitingInput { uiRender, next }
 
 craftingUIHints :: Array UIHint
 craftingUIHints =
-  [ UIHint "Escape" "Back"
-  , UIHint "letter" "Toggle item"
-  , UIHint "enter" "Craft"
+  [ UIHint "letter" "Toggle item"
+  , UIHint "Enter" "Craft"
+  , UIHint "Escape" "Back"
   ]
 
 crafting ::
@@ -106,7 +105,8 @@ crafting gs furniture selected = AwaitingInput { uiRender, next }
   where
     uiRender = Crafting selected shownRecipes craftingUIHints furniture
     shownRecipes = getRecipes (Array.fromFoldable $ itemType <$> Map.values gs.inventory)
-       # filter \r -> all (recipeCanUse r) (itemType <<< _.item <$> selected)
+       # filter (\r -> all (recipeCanUse r) (itemType <<< _.item <$> selected))
+       # filter (canCraft furniture)
     next "Escape" = main gs
     next "Enter" = main gs
     next "Space" = main gs -- TODO: craft the item!
@@ -136,7 +136,7 @@ inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing inventoryUIHint
 subInventoryUIHints :: Array UIHint
 subInventoryUIHints =
   [ UIHint "KeyD" "Drop"
-  , UIHint "Escape" "Deselect"
+  , UIHint "Escape" "Back"
   ]
 
 subInventory :: GameState -> Char -> Item -> UI

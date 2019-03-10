@@ -85,6 +85,14 @@ data UIRenderData
 
 type MapGenHint = { rng :: Gen, region :: Region }
 
+
+getUIHints :: UIRenderData -> Array UIHint
+getUIHints (MainGame x) = x
+getUIHints (StartScreen) = mempty
+getUIHints (InventoryScreen _ x) = x
+getUIHints (ServeCustomerScreen x) = x
+getUIHints (Crafting _ _ x _) = x
+
 type Placeholder = { position :: Position, direction :: Direction, next :: MapGenHint}
 
 type FieldOfView = Array { screen :: Vector Int, absolute :: Position, tiles :: Array Tile }

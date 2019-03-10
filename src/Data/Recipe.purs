@@ -9,6 +9,7 @@ import Partial.Unsafe (unsafePartial)
 
 import Data.Attribute (Attribute(..))
 import Data.Furniture (FurnitureType, stringToFurnitureType)
+import Data.Furniture as Furniture
 import Data.Item (ItemType, stringToItemType, hasAttribute)
 
 
@@ -38,6 +39,11 @@ suitable :: RecipeInput -> ItemType -> Boolean
 suitable (Right it') it = it == it'
 suitable (Left at) it = hasAttribute at it
 
+matchesMethod :: FurnitureType -> CraftingMethod -> Boolean
+matchesMethod _ Hand = true
+matchesMethod ft (ApplianceByName t) = ft == t
+matchesMethod ft (ApplianceByAttribute at) = Furniture.hasAttribute ft at
+
 distance :: Array ItemType -> Array RecipeInput -> Int
 distance items inputs =
   inputs # countIf \input -> not (any $ suitable input) items
@@ -47,6 +53,10 @@ getRecipes items = sortBy (comparing \r -> distance items r.inputs) recipeRecord
 
 recipeCanUse :: RecipeRecord -> ItemType -> Boolean
 recipeCanUse {inputs} it = any (\input -> suitable input it) inputs
+
+canCraft :: Maybe FurnitureType -> RecipeRecord -> Boolean
+canCraft Nothing r = Map.member Hand r.methods
+canCraft (Just ft) r = isJust $ find (matchesMethod ft) (Map.keys r.methods)
 
 attr :: Partial => String -> Int -> Tuple CraftingMethod Int
 attr attrName turns = Tuple (ApplianceByAttribute $ Attribute attrName) turns
@@ -82,3 +92,4 @@ recipeRecords = unsafePartial $
       [ name "cutting board" 0 ]
       "diced onion"
   ]
+

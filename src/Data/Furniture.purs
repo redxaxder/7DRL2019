@@ -4,6 +4,7 @@ module Data.Furniture
   , furniture
   , furnitureByChar
   , getFurnitureRecord
+  , hasAttribute
   , stringToFurnitureType
   )
   where
@@ -65,3 +66,7 @@ furnitureByChar = keyBy (_.char <<< getFurnitureRecord) furniture
 
 stringToFurnitureType :: Partial => String -> FurnitureType
 stringToFurnitureType name = fromJust $ furniture # find \item -> toLower (getFurnitureRecord item).name == toLower name
+
+hasAttribute :: FurnitureType -> Attribute -> Boolean
+hasAttribute t attr = elem attr (getFurnitureRecord t).attributes
+

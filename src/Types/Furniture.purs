@@ -23,7 +23,3 @@ furnitureSprite = _.sprite <<< getFurnitureRecord <<< furnitureType
 
 furnitureType :: Furniture -> FurnitureType
 furnitureType (Furniture {furnitureType: t}) = t
-
-hasAttribute :: Furniture -> Attribute -> Boolean
-hasAttribute (Furniture {furnitureType: t}) attr = elem attr (getFurnitureRecord t).attributes
-

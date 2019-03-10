@@ -4,6 +4,7 @@ import Extra.Prelude
 
 import Control.Monad.State (evalState)
 import Data.Array (take, zip, range, cons, scanl, (..))
+import Data.Enum (enumFromTo)
 import Data.Array.NonEmpty as NE
 import Data.Foldable (maximum)
 import Data.String.CodeUnits (singleton)
@@ -11,15 +12,17 @@ import Data.Map (Map, toUnfoldable)
 import Data.String.Common (toLower)
 
 import Atlas (Position)
-import Constants (canvasDimensions, charHeight, displayDimensions, white)
-import Data.Furniture (getFurnitureRecord)
+import Constants (canvasDimensions, charHeight, displayDimensions, white, blue, gray)
+import Data.Furniture (getFurnitureRecord, FurnitureType)
 import Data.Item (getItemRecord)
+import Data.Recipe (RecipeRecord)
 import Data.Sprite (glitch, player, spriteAt)
 import Data.Tile (Tile, tileSprite)
 import Graphics.Render
   ( Context
   , drawSpriteToGrid
-  , drawText
+  , drawTextToGrid
+  , drawLinesToGrid
   , clear
   , setFillStyle
   , getTextDimensions
@@ -36,6 +39,7 @@ import Types
   , assembleUIHint
   , getVisible
   , liftCustomerState
+  , getUIHints
   )
 import Types.Customer (Customer, getCustomers, displayReward)
 import Types.Furniture (furnitureSprite)
@@ -43,113 +47,99 @@ import Types.Item (itemSprite, itemName)
 import Types.Mob (mobSprite, mobName)
 
 draw :: Context -> UIRenderData -> GameState -> Effect Unit
+draw ctx uiRenderData gs = do
+  clear ctx
+  drawMainPane ctx uiRenderData gs
+  case uiRenderData of
+       StartScreen -> pure unit
+       _ -> drawLeftPane ctx uiRenderData gs
 
-draw ctx (InventoryScreen selected hints) gs =
-  drawModal ctx
-    { title: "Inventory"
-    , selected: maybe [] pure $
-        map (\x -> { label: x.label, text: itemName x.item }) selected
-    , columns: pure $
-        map (\(Tuple label item) -> { label, text: itemName item }) $
-        toUnfoldable gs.inventory :: Array (Tuple Char Item)
-    , hints
-    }
+-----------------------------------------------------------------
+-- ruler for debugging
+-----------------------------------------------------------------
 
-draw ctx (Crafting selected recipes hints furniture) gs =
-  drawModal ctx
-    { title:
-        let getName = _.name <<< getFurnitureRecord
-        in "Recipes (" <> maybe "Hand" getName furniture <> ")"
-    , selected: []
-    , columns: []
-    , hints
-    }
+drawRuler ctx = drawLinesToGrid ctx white (V {x:0, y:0}) (map show $ enumFromTo 0 29)
 
-draw ctx (ServeCustomerScreen hints) gs =
-  drawModal ctx
-    { title: "Serve Customers"
-    , selected: []
-    , columns: []
-    , hints
-    }
+-----------------------------------------------------------------
+-- Left pane
+-----------------------------------------------------------------
 
-draw ctx StartScreen _ = drawStartScreen ctx
-draw ctx (MainGame hints) gs = drawMain ctx gs hints
+drawLeftPane :: Context -> UIRenderData -> GameState -> Effect Unit
+drawLeftPane ctx uiRenderData gs = do
+  setFillStyle ctx white
+  drawStatusInfo ctx gs
+  drawSeenInfo ctx gs
+  drawLog ctx gs
+  drawOrderInfo ctx gs
+  drawDividers ctx gs
+  drawHints ctx (getUIHints uiRenderData)
+  --drawRuler ctx
 
-drawModal ::
-  Context ->
-  { title :: String
-  , selected :: Array { label :: Char, text :: String }
-  , columns :: Array (Array { label :: Char, text :: String })
-  , hints :: Array UIHint
-  } ->
-  Effect Unit
-drawModal ctx props = do
-  -- clear the log area plus any additional space needed
-  let lines = max logLines $ fromMaybe 0 $ maximum $ map length props.columns
-  clearRegion ctx
-    { x: uiLeftCoord
-    , y: 0.0
-    , width: 1000.0
-    , height: textOffset.y + charHeight * (toNumber $ lines + 1)
-    }
-  -- draw title
-  drawText ctx (uiLeftCoord + 195.0) uiTopCoord props.title
-  -- draw selected in a column
-  drawText ctx uiLeftCoord (uiTopCoord + charHeight) "Selected"
-  props.selected # traverseWithIndex_ \ix { label, text } ->
-    drawText ctx
-      uiLeftCoord
-      (uiTopCoord + charHeight * toNumber (ix + 2))
-      (singleton label <> ") " <> text)
-  -- draw remaining columns
-  props.columns # traverseWithIndex_ \colNo colDat ->
-    colDat # traverseWithIndex_ \rowNo { label, text } ->
-      drawText ctx
-        (uiLeftCoord + 195.0 * toNumber (colNo + 1))
-        (uiTopCoord + charHeight * toNumber (rowNo + 2))
-        (singleton label <> ") " <> text)
-  -- draw hints
-  drawUIHints ctx props.hints
+-- Line 0 to Line 2
+drawStatusInfo :: Context -> GameState -> Effect Unit
+drawStatusInfo ctx gs = pure unit
+
+
+-- Line 4 to Line 10
+drawSeenInfo :: Context -> GameState -> Effect Unit
+drawSeenInfo ctx gs = pure unit
+
+-- Line 12 to line 21
+drawLog :: Context -> GameState -> Effect Unit
+drawLog ctx gs = drawLinesToGrid ctx white (V {x: 0, y:12}) (logString <$> take 10 gs.logevents)
+  where
+    logString :: LogEvent -> String
+    logString (ItemEvent item) = "Acquired " <> toLower (itemName item) <> "!"
+    logString (CombatEvent mob) = "Hit " <> toLower (mobName mob) <> "!"
+    logString (MonsterKilledEvent mob) = "Killed " <> toLower (mobName mob) <> "!"
+    logString (PlayerAttacked mob) = "Hit by " <> toLower (mobName mob) <> "!"
+
+-- Line 22 to line 24
+drawOrderInfo :: Context -> GameState -> Effect Unit
+drawOrderInfo ctx gs = pure unit
+
+drawDividers :: Context -> GameState -> Effect Unit
+drawDividers _ _ = pure unit
+
+-- Line 27 to line 29
+drawHints :: Context -> Array UIHint -> Effect Unit
+drawHints ctx hints = drawLinesToGrid ctx white (V {x: 0, y:27}) (assembleUIHint <$> take 3 hints)
+
+-----------------------------------------------------------------
+-- Main pane
+-----------------------------------------------------------------
+
+drawMainPane :: Context -> UIRenderData -> GameState -> Effect Unit
+drawMainPane ctx StartScreen             gs = drawStartScreen ctx
+drawMainPane ctx (MainGame _)            gs = drawMainGame ctx gs
+drawMainPane ctx (InventoryScreen s _)   gs = drawInventory ctx gs s
+drawMainPane ctx (ServeCustomerScreen _) gs = drawServeCustomer ctx gs
+drawMainPane ctx (Crafting s r _ f)      gs = drawCrafting ctx gs s r f
 
 drawStartScreen :: Context -> Effect Unit
 drawStartScreen ctx = do
   clear ctx
-  setFillStyle ctx white
-  drawText ctx uiLeftCoord (154.0                   ) "You find an interdimensional dungeon"
-  drawText ctx uiLeftCoord (154.0 +       charHeight) "entrance in the pantry of your"
-  drawText ctx uiLeftCoord (154.0 + 2.0 * charHeight) "failing restaurant."
-  drawText ctx uiLeftCoord (154.0 + 3.0 * charHeight) "The Monsters are delicious!"
-  drawText ctx uiLeftCoord (154.0 + 4.0 * charHeight) "Go!  Save your restaurant!"
+  drawLinesToGrid ctx white (V {x: 16, y: 10})
+    [ "You find an interdimensional dungeon"
+    , "entrance in the pantry of your"
+    , "failing restaurant."
+    , "The Monsters are delicious!"
+    , "Go!  Save your restaurant!"
+    ]
 
-drawMain :: Context -> GameState -> Array UIHint -> Effect Unit
-drawMain ctx gs hints = do
-  clear ctx
-  traverse_ (drawSpriteToGrid ctx (spriteAt 1 3)) do
-    x <- 0 .. 14
-    y <- 0 .. 14
-    pure (V { x, y })
+drawMainGame :: Context -> GameState -> Effect Unit
+drawMainGame ctx gs = do
   gs.fov # traverse_ \{ screen, tiles } ->
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
   drawVisible gs.furniture furnitureSprite
   drawVisible gs.items itemSprite
   drawVisible gs.mobs mobSprite
   drawSpriteToGrid ctx player (toCornerRelative zero)
-  drawLog ctx gs
-  drawText ctx 0.0 0.0 "Customers"
-  traverseWithIndex_ drawCustomer $ evalState (liftCustomerState getCustomers) gs
-  drawUIHints ctx hints
-  pure unit
-  where
 
+  where
   drawVisible :: forall a. Map Position a -> (a -> Sprite) -> Effect Unit
   drawVisible m sprite = getVisible gs.fov m # traverse_ \{ a, screen } ->
     drawSpriteToGrid ctx (sprite a) (toCornerRelative screen)
-
-  spriteFromTileStack :: Array Tile -> Sprite
-  spriteFromTileStack xss = case NE.fromArray xss of
-    Nothing -> glitch
-    Just xs -> tileSprite $ NE.head xs
 
   toCornerRelative :: Vector Int -> Vector Int
   toCornerRelative (V {x,y}) = V { x: x', y: y' }
@@ -157,56 +147,33 @@ drawMain ctx gs hints = do
     x' = x + div displayDimensions.width 2
     y' = y + div displayDimensions.height 2
 
-  drawCustomer :: Int -> Customer -> Effect Unit
-  drawCustomer ix { order, reward, turnsLeft } = do
-    drawText ctx
-      0.0
-      (toNumber (3 * ix + 1) * charHeight)
-      "---"
-    drawText ctx
-      0.0
-      (toNumber (3 * ix + 2) * charHeight)
-      ((getItemRecord order).name <> " " <> show turnsLeft)
-    drawText ctx
-      0.0
-      (toNumber (3 * ix + 3) * charHeight)
-      ("  " <> displayReward reward)
+  spriteFromTileStack :: Array Tile -> Sprite
+  spriteFromTileStack xss = case NE.fromArray xss of
+    Nothing -> glitch
+    Just xs -> tileSprite $ NE.head xs
 
-drawLog :: Context -> GameState -> Effect Unit
-drawLog ctx gs = sequence_ $ map drawLogItem (zip (range 1 logLines) (take logLines gs.logevents))
+drawInventory :: Context -> GameState -> (Maybe {label :: Char, item :: Item}) -> Effect Unit
+drawInventory ctx gs selected = do
+  let getColor = case selected of
+        Nothing -> const gray
+        Just {label, item} -> \(Tuple c _) -> if (label == c)
+                                                then white
+                                                else gray
+  drawTextToGrid ctx white "Inventory" (V {x: 23, y: 1})
+  (toUnfoldable gs.inventory :: Array _) # traverseWithIndex_ \ix item -> do
+     drawTextToGrid ctx (getColor item) (itemString item) (V {x: 23, y: 4 + ix})
   where
-    drawLogItem :: Tuple Int LogEvent -> Effect Unit
-    drawLogItem (Tuple index evt) = drawText ctx
-      (uiLeftCoord + 150.0)
-      (uiTopCoord + (toNumber $ index - 1) * charHeight)
-      (logString evt)
+  itemString (Tuple c i) = (singleton c) <> ") " <> (itemName i)
 
-    logString :: LogEvent -> String
-    logString (ItemEvent item) = "Acquired " <> toLower (itemName item) <> "!"
-    logString (CombatEvent mob) = "Hit " <> toLower (mobName mob) <> "!"
-    logString (MonsterKilledEvent mob) = "Killed " <> toLower (mobName mob) <> "!"
-    logString (PlayerAttacked mob) = "Hit by " <> toLower (mobName mob) <> "!"
 
-logLines :: Int
-logLines = 3
+drawServeCustomer :: Context -> GameState -> Effect Unit
+drawServeCustomer ctx gs = drawTODO ctx
 
-uiLeftCoord :: Number
-uiLeftCoord = 53.0
+drawCrafting
+  :: Context -> GameState -> (Array { label :: Char, item :: Item })
+  -> Array RecipeRecord -> Maybe FurnitureType -> Effect Unit
+drawCrafting ctx gs selectedItems recipes furniture = drawTODO ctx
 
-uiTopCoord :: Number
-uiTopCoord = charHeight
+drawTODO :: Context -> Effect Unit
+drawTODO ctx = drawLinesToGrid ctx white (V {x: 20, y: 15}) ["TODO"]
 
-uiHintScreenHeight :: Number
-uiHintScreenHeight = canvasDimensions.height - charHeight * 3.0
-
-drawUIHints :: Context -> Array UIHint -> Effect Unit
-drawUIHints ctx hints =
-  let widths = map (_.width <<< getTextDimensions <<< assembleUIHint) hints
-      locations = cons 0.0 $ scanl (+) 0.0 widths
-  in do
-    clearRegion ctx {x: 0.0, y: uiHintScreenHeight, width: canvasDimensions.width, height: canvasDimensions.height}
-    sequence_ $ map (drawHintItem ctx) (zip locations hints)
-
-drawHintItem :: Context -> Tuple Number UIHint -> Effect Unit
-drawHintItem ctx (Tuple loc hint) =
-  drawText ctx loc uiHintScreenHeight $ assembleUIHint hint
