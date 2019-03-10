@@ -38,16 +38,17 @@ import Types.Item (Item (..), ItemType)
 import Types.Mob (Mob (..), MobType, position)
 
 type GameState =
-  { player :: Position
-  , atlas :: Atlas Tile
+  { atlas :: Atlas Tile
+  , customerState :: CustomerState
+  , distanceMap :: Map Position Int
+  , fov :: FieldOfView
+  , furniture :: Map Position Furniture
   , inventory :: Map Char Item
   , items :: Map Position Item
-  , customerState :: CustomerState
-  , placeholders :: Map Position Placeholder
-  , fov :: FieldOfView
-  , mobs :: Map Position Mob
-  , furniture :: Map Position Furniture
   , logevents :: Array LogEvent -- log all the events
+  , mobs :: Map Position Mob
+  , placeholders :: Map Position Placeholder
+  , player :: Position
   }
 
 liftMobState :: forall a. Position -> (GameState -> State Mob a) -> State GameState (Maybe a)

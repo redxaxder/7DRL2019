@@ -4,8 +4,9 @@ import Extra.Prelude
 
 import Control.Monad.Rec.Class (tailRec, Step(..))
 import Control.Monad.State (execState, State, get, modify_)
-import Data.Array (cons, find)
+import Data.Array (cons, find, filter)
 import Data.Array as Array
+import Data.Array.NonEmpty (cons', head, sortBy)
 import Data.Enum (enumFromTo)
 import Data.Map (delete, lookup)
 import Data.Map as Map
@@ -19,6 +20,7 @@ import Atlas (move, getElement, Position)
 import Combat (doAttack, attackPlayer)
 import Data.Tile (blocksMovement)
 import Direction (Direction(..))
+import DistanceMap (makeDistanceMap)
 import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
@@ -28,7 +30,7 @@ import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
 import Types (GameState, LogEvent(..), Mob, liftMobState)
-import Types.Mob (position, moveMob)
+import Types.Mob (position, moveMob')
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
 main :: Effect Unit
@@ -63,7 +65,10 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
+stepEnvironment = tailRec expand
+  >>> pickUpItem
+  >>> updateDistanceMap
+  >>> doMobStuff
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -74,6 +79,9 @@ stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
 
 updateFOV :: GameState -> GameState
 updateFOV gs = gs { fov = visibleTiles 10 gs }
+
+updateDistanceMap :: GameState -> GameState
+updateDistanceMap gs = gs { distanceMap = makeDistanceMap 10 gs.player gs.atlas }
 
 handleAction :: GameState -> Action -> Maybe GameState
 handleAction gs (Move dir) =
@@ -166,6 +174,13 @@ interpretMobAction :: MobAction -> GameState -> GameState
 interpretMobAction (MobAttack mob) gs = attackPlayer gs mob
 interpretMobAction (MobPass mob) gs = gs
 
+monsterMovement :: GameState -> Position -> Position
+monsterMovement gs p = map (\d -> move d gs.atlas p) [U,D,L,R]
+  # filter (passable gs)
+  # cons' p
+  # sortBy (comparing \x -> fromMaybe 100 $ Map.lookup x gs.distanceMap)
+  # head
+
 data MobAction = MobAttack Mob | MobPass Mob
 individualMonsterAction2 :: GameState -> State Mob MobAction
 individualMonsterAction2 gs = do
@@ -173,11 +188,9 @@ individualMonsterAction2 gs = do
   let mobPos = position mob
   case playerAdjacent mobPos of
     Just dir -> MobAttack <$> get
-    Nothing -> case findEmptySpace mobPos of
-      Just moveDir -> do
-        modify_ $ moveMob moveDir gs.atlas
+    Nothing -> do
+        modify_ $ moveMob' (monsterMovement gs mobPos)
         MobPass <$> get
-      Nothing -> MobPass <$> get
   where
     playerAdjacent :: Position -> Maybe Direction
     playerAdjacent = findAdjacent playerAdjacentDirection
