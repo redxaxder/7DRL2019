@@ -48,6 +48,7 @@ type GameState =
   , mobs :: Map Position Mob
   , placeholders :: Map Position Placeholder
   , player :: Position
+  , startingPosition :: Position -- for warping
   }
 
 liftMobState :: forall a. Position -> (GameState -> State Mob a) -> State GameState (Maybe a)
@@ -101,6 +102,7 @@ assembleUIHint :: UIHint -> String
 assembleUIHint (UIHint "KeyC" string) = "(c) " <> string <> " "
 assembleUIHint (UIHint "KeyD" string) = "(d) " <> string <> " "
 assembleUIHint (UIHint "KeyI" string) = "(i) " <> string <> " "
+assembleUIHint (UIHint "KeyW" string) = "(w) " <> string <> " "
 assembleUIHint (UIHint "Escape" string) = "(esc) " <> string <> " "
 assembleUIHint (UIHint "Space" string) = "(space) " <> string <> " "
 assembleUIHint (UIHint "Period" string) = "(.) " <> string <> " "
@@ -131,4 +133,4 @@ canServe :: Item -> GameState -> Boolean
 canServe item@(Item { itemType }) { customerState: CustomerState cs } =
   isJust $ find (\c -> itemType == c.order) cs.customers
 
-data Action = Move Direction | Drop Char | Serve Char | Pass
+data Action = Move Direction | Drop Char | Serve Char | Warp | Pass

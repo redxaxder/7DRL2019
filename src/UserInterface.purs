@@ -43,6 +43,7 @@ mainUIHints :: Array UIHint
 mainUIHints =
   [ UIHint "KeyC" "Crafting"
   , UIHint "KeyI" "Inventory"
+  , UIHint "KeyW" "Warp to kitchen"
   , UIHint "Period" "Pass"
   ]
 
@@ -61,6 +62,7 @@ main gs = AwaitingInput { uiRender: MainGame mainUIHints, next }
     next "Space"      = GameAction { uiAction: Pass, next: main }
     next "Period"     = GameAction { uiAction: Pass, next: main }
     next "KeyC"       = crafting gs Nothing mempty
+    next "KeyW"       = GameAction { uiAction: Warp, next: main }
     next _            = main gs
 
 moveOrCraft :: GameState -> Direction -> UI

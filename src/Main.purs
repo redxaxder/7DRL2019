@@ -125,6 +125,8 @@ handleAction gs (Serve itemChar) = flip evalState gs do
 
 handleAction gs Pass = Just gs
 
+handleAction gs Warp = Just $ gs { player = gs.startingPosition }
+
 letters :: Set.Set Char
 letters = Set.fromFoldable (enumFromTo 'a' 'z' :: Array Char)
 

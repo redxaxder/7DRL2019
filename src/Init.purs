@@ -29,6 +29,7 @@ init = do
        , mobs: mempty -- exampleMobs
        , placeholders
        , player
+       , startingPosition: player
        }
 
 exampleMobs :: Map Position Mob
