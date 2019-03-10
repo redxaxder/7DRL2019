@@ -5,6 +5,12 @@ import Extra.Prelude
 font :: String
 font = "16px monospace"
 
+charWidth :: Number
+charWidth = 10.0
+
+charHeight :: Number
+charHeight = 16.0
+
 tileDimensions :: { width ∷ Int, height ∷ Int }
 tileDimensions =
   { width: 32
@@ -12,16 +18,10 @@ tileDimensions =
   }
 
 displayDimensions :: { width ∷ Int, height ∷ Int }
-displayDimensions =
-  { width: 20
-  , height: 20
-  }
+displayDimensions = { width: 15, height: 15 }
 
 canvasDimensions :: { width ∷ Number, height ∷ Number }
-canvasDimensions =
-  { width: toNumber $ tileDimensions.width * displayDimensions.width
-  , height: toNumber $ tileDimensions.height * displayDimensions.height
-  }
+canvasDimensions = { width: 640.0, height: 480.0 }
 
 newtype Color = Color String
 derive instance newtypeColor :: Newtype Color _

@@ -14,9 +14,8 @@ import Data.String.Pattern (Pattern (..))
 
 import Atlas (move)
 import Data.Recipe (getRecipes, recipeCanUse)
-import Types (GameState, UIRenderData (..), Item, UIHint(..), canServe)
+import Types (GameState, UIRenderData (..), Item, UIHint(..), Action(..), canServe)
 import Types.Item (itemType)
-import Intent (Action (..))
 import Direction (Direction (..))
 import Types.Furniture (counter, furnitureType)
 

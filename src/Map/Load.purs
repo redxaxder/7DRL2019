@@ -17,7 +17,7 @@ import Data.Maps (getTerrain)
 import Direction (Direction(..))
 import Direction as Dir
 import Random (Random, branch, chance, element)
-import Types (Placeholder, MapData, Tile (..), Region (..), Furniture, Item, MobType, Mob)
+import Types (Furniture, Item, MapData, MobType, Placeholder, Region(..), Tile(..))
 import Types.Furniture (mkFurniture)
 import Types.Item (mkItem)
 import Data.Item (itemByChar)

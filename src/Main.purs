@@ -33,7 +33,6 @@ import FRP.Event.Keyboard (down)
 import Graphics.Draw (draw)
 import Graphics.Render (initCanvas)
 import Init (init)
-import Intent (Action(..))
 import Map.Gen (expandMap)
 import Types
   ( GameState
@@ -45,6 +44,7 @@ import Types
   , applyReward'
   , serveCustomer
   , liftInventoryState
+  , Action(..)
   )
 import Types.Mob (position, moveMob')
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
