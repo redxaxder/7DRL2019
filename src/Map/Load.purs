@@ -16,11 +16,12 @@ import Data.Furniture (furnitureByChar)
 import Data.Maps (getTerrain)
 import Direction (Direction(..))
 import Direction as Dir
-import Random (Random, branch)
-import Types (Placeholder, MapData, Tile (..), Region (..), Furniture, Item)
+import Random (Random, branch, chance, element)
+import Types (Placeholder, MapData, Tile (..), Region (..), Furniture, Item, MobType, Mob)
 import Types.Furniture (mkFurniture)
 import Types.Item (mkItem)
 import Data.Item (itemByChar)
+import Data.Mob (mobs)
 
 load
   :: MapData
@@ -31,10 +32,12 @@ load
             , entrance :: LocalPosition
             , furniture :: ChartId -> Map Position Furniture
             , items :: ChartId -> Map Position Item
+            --, mobs :: ChartId -> Array Mob
             }
 load mapData region rotation = do
-  let mapTokens = rotate rotation $ toMapTokens region (getTerrain mapData)
-      indexedMap = addIndices mapTokens
+  mapTokens <- rotate rotation
+    <$> (sequence <<< map sequence) (toMapTokens region (getTerrain mapData))
+  let indexedMap = addIndices mapTokens
       tiles = (map <<< map) (getTile region) mapTokens
       protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
                      case a of
@@ -48,9 +51,9 @@ load mapData region rotation = do
       entrance = case find ((eq Entrance) <<< _.a) indexedMap of
         Nothing -> V { x:100, y:1000 } -- no entrance marker in template; just add one wherever
         Just {x,y} -> V { x, y }
-      chart = mkChart (Wall Cave) tiles
       furniture = placeFurniture indexedMap
       items = placeItems indexedMap
+      chart = mkChart (Wall Cave) tiles
   generators <- traverse (\_ -> branch) protoExits
   let exits cid = zipWith (mkExit cid) protoExits (( \rng -> {rng, region}) <$> generators )
   pure $ { chart, exits, entrance, furniture, items }
@@ -77,7 +80,7 @@ rotateLeft xs = case sequence $ map unsnoc xs of
 rotate :: forall a. Direction -> Array (Array a) -> Array (Array a)
 rotate d = repeatedly (Dir.toInt d) rotateLeft
 
-data MapToken = T Tile | Exit Direction | Entrance | Character Char
+data MapToken = T Tile | Exit Direction | Entrance | Character Char | Monster MobType
 derive instance eqMapToken :: Eq MapToken
 
 getChar :: MapToken -> Maybe Char
@@ -95,15 +98,33 @@ getTile :: Region -> MapToken -> Tile
 getTile _ (T a) = a
 getTile r _ = Floor r
 
-toMapTokens :: Region -> Array String -> Array (Array MapToken)
+toMapTokens :: Region -> Array String -> Array (Array (Random MapToken))
 toMapTokens r rows = (map (getMapToken r) <<< toCharArray) <$> rows
 
-getMapToken :: Region -> Char -> MapToken
-getMapToken r '#' = T $ Wall r
-getMapToken _ '^' = Exit U
-getMapToken _ 'v' = Exit D
-getMapToken _ '<' = Exit L
-getMapToken _ '>' = Exit R
-getMapToken _ '!' = Entrance
-getMapToken r '.' = T $ Floor r
-getMapToken _  c  = Character c
+getMapToken :: Region -> Char -> Random MapToken
+getMapToken r '#' = pure $ T $ Wall r
+getMapToken _ '^' = pure $ Exit U
+getMapToken _ 'v' = pure $ Exit D
+getMapToken _ '<' = pure $ Exit L
+getMapToken _ '>' = pure $ Exit R
+getMapToken _ '!' = pure $ Entrance
+getMapToken r '.' = pure $ T $ Floor r
+getMapToken r '9' = wallChance r 90
+getMapToken r '8' = wallChance r 80
+getMapToken r '7' = wallChance r 70
+getMapToken r '6' = wallChance r 60
+getMapToken r '5' = wallChance r 50
+getMapToken r '4' = wallChance r 40
+getMapToken r '3' = wallChance r 30
+getMapToken r '2' = wallChance r 20
+getMapToken r '1' = wallChance r 10
+getMapToken _ '?' = Monster <$> element mobs
+getMapToken _  c  = pure $ Character c
+
+
+wallChance :: Region -> Int -> Random MapToken
+wallChance r i = do
+  isWall <- chance i
+  if isWall
+    then pure $ T $ Wall r
+    else pure $ T $ Floor r

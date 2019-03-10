@@ -3,7 +3,7 @@ module Init where
 import Extra.Prelude
 
 import Atlas (Position(..), ChartId(..))
-import Data.Array (head)
+import Data.Array.NonEmpty (head)
 import Data.Map (Map)
 import Data.Mob (mobs)
 import Map.Gen (initMap)
@@ -17,15 +17,16 @@ init = do
   customerGen <- newGen
   let { atlas, player, placeholders, furniture } = initMap mapGen
   pure { atlas
+       , customerState: customerStateFromGen customerGen
+       , distanceMap: mempty
        , fov: mempty
        , furniture
        , inventory: mempty --exampleInventory
        , items: mempty --exampleItems
-       , placeholders
-       , mobs: exampleMobs
-       , player
        , logevents: mempty
-       , customerState: customerStateFromGen customerGen
+       , mobs: exampleMobs
+       , placeholders
+       , player
        }
 
 {-
@@ -44,8 +45,8 @@ exampleItems = fromFoldable
 -}
 exampleMobs :: Map Position Mob
 exampleMobs = keyBy position [mob]
-  where 
-  mob = mkMob (unsafeFromJust $ head mobs) p
+  where
+  mob = mkMob (head mobs) p
   p = Position {chartId: ChartId 0, localPosition: V {x: 2, y: 2}}
 
 --}

@@ -13,7 +13,7 @@ import Data.String.Pattern (Pattern (..))
 
 import Atlas (move)
 import Data.Recipe (getRecipes, recipeCanUse)
-import Types (GameState, UIRenderData (..), Item)
+import Types (GameState, UIRenderData (..), Item, UIHint(..))
 import Types.Item (itemType)
 import Intent (Action (..))
 import Direction (Direction (..))
@@ -39,8 +39,15 @@ getAwaitingInput (GameAction _) = Nothing
 uiInit :: GameState -> UIAwaitingInput
 uiInit gs = { uiRender: StartScreen, next: const (main gs) }
 
+mainUIHints :: Array UIHint
+mainUIHints =
+  [ UIHint "KeyC" "Crafting"
+  , UIHint "KeyI" "Inventory"
+  , UIHint "Period" "Pass"
+  ]
+  
 main :: GameState -> UI
-main gs = AwaitingInput { uiRender: MainGame, next }
+main gs = AwaitingInput { uiRender: MainGame mainUIHints, next }
   where
     next "ArrowLeft"  = moveOrCraft gs L
     next "KeyH"       = moveOrCraft gs L
@@ -65,8 +72,14 @@ moveOrCraft gs d =
                                then inventory gs -- TODO: to item serving
                                else crafting gs mempty
 
+craftingUIHints :: Array UIHint
+craftingUIHints =
+  [ UIHint "Escape" "Exit"
+  , UIHint "letter" "Toggle item"
+  , UIHint "enter" "Craft"
+  ]
 crafting :: GameState -> Array { label :: Char, item :: Item } -> UI
-crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes, next }
+crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes craftingUIHints, next }
   where
     shownRecipes = getRecipes (Array.fromFoldable $ itemType <$> Map.values gs.inventory)
        # filter \r -> all (recipeCanUse r) (itemType <<< _.item <$> selected)
@@ -81,8 +94,14 @@ crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes,
                         Just x -> delete x selected
       pure $ crafting gs selected'
 
+inventoryUIHints :: Array UIHint
+inventoryUIHints =
+  [ UIHint "letter" "Select item"
+  , UIHint "any other" "Exit menu"
+  ]
+  
 inventory :: GameState -> UI
-inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing, next }
+inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing inventoryUIHints, next }
   where
     next key = case getCharacter key of
       Nothing -> main gs -- it's not a letter; back to main
@@ -91,8 +110,13 @@ inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing, next }
           Nothing -> inventory gs
           Just selectedItem -> subInventory gs d selectedItem
 
+subInventoryUIHints :: Array UIHint
+subInventoryUIHints =
+  [ UIHint "KeyD" "Drop"
+  , UIHint "Escape" "Deselect" 
+  ]
 subInventory :: GameState -> Char -> Item -> UI
-subInventory gs label item = AwaitingInput { uiRender: InventoryScreen (Just {label, item}), next }
+subInventory gs label item = AwaitingInput { uiRender: InventoryScreen (Just {label, item}) subInventoryUIHints, next }
   where
     next "KeyD" = GameAction { uiAction: Drop label, next: main }
     next "Escape" = inventory gs
