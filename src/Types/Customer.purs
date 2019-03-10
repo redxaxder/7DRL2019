@@ -76,3 +76,8 @@ tickCustomers = modify_ \(CustomerState cs) ->
       , customers: cs.customers <> result
       , pending: cs.pending
       }
+
+getCustomers :: State CustomerState (Array Customer)
+getCustomers = do
+  CustomerState cs <- get
+  pure cs.customers
