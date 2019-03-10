@@ -2,6 +2,7 @@ module UserInterface where
 
 import Extra.Prelude
 
+import Control.MonadZero (guard)
 import Data.Array (cons, delete, filter)
 import Data.Array as Array
 import Data.Foldable (find, all)
@@ -13,7 +14,7 @@ import Data.String.Pattern (Pattern (..))
 
 import Atlas (move)
 import Data.Recipe (getRecipes, recipeCanUse)
-import Types (GameState, UIRenderData (..), Item, UIHint(..))
+import Types (GameState, UIRenderData (..), Item, UIHint(..), canServe)
 import Types.Item (itemType)
 import Intent (Action (..))
 import Direction (Direction (..))
@@ -69,15 +70,33 @@ moveOrCraft gs d =
    in case Map.lookup targetPos gs.furniture of
            Nothing -> GameAction { uiAction: (Move d), next: main }
            Just furniture -> if furnitureType furniture == counter
-                               then inventory gs -- TODO: to item serving
+                               then chooseItemToServe gs
                                else crafting gs mempty
+
+chooseItemHints :: Array UIHint
+chooseItemHints = 
+  [ UIHint "Escape" "Back"
+  ]
+
+chooseItemToServe :: GameState -> UI
+chooseItemToServe gs = AwaitingInput { uiRender, next }
+  where
+    uiRender = ServeCustomerScreen chooseItemHints
+
+    next "Escape" = main gs
+    next key = fromMaybe (chooseItemToServe gs) do
+      c <- getCharacter key
+      item <- lookup c gs.inventory
+      guard (canServe item gs)
+      pure $ GameAction { uiAction: Serve c, next: main }
 
 craftingUIHints :: Array UIHint
 craftingUIHints =
-  [ UIHint "Escape" "Exit"
+  [ UIHint "Escape" "Back"
   , UIHint "letter" "Toggle item"
   , UIHint "enter" "Craft"
   ]
+
 crafting :: GameState -> Array { label :: Char, item :: Item } -> UI
 crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes craftingUIHints, next }
   where
@@ -97,24 +116,24 @@ crafting gs selected = AwaitingInput { uiRender: Crafting selected shownRecipes 
 inventoryUIHints :: Array UIHint
 inventoryUIHints =
   [ UIHint "letter" "Select item"
-  , UIHint "any other" "Exit menu"
+  , UIHint "Escape" "Back"
   ]
-  
+
 inventory :: GameState -> UI
 inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing inventoryUIHints, next }
   where
-    next key = case getCharacter key of
-      Nothing -> main gs -- it's not a letter; back to main
-      Just d -> -- it's a letter; enter the subinventory screen for the corresponding item (if exists). stay here (if doesn't exist)
-        case (lookup d gs.inventory) of
-          Nothing -> inventory gs
-          Just selectedItem -> subInventory gs d selectedItem
+    next "Escape" = main gs
+    next key = fromMaybe (inventory gs) do
+      c <- getCharacter key
+      selectedItem <- lookup c gs.inventory
+      pure $ subInventory gs c selectedItem
 
 subInventoryUIHints :: Array UIHint
 subInventoryUIHints =
   [ UIHint "KeyD" "Drop"
   , UIHint "Escape" "Deselect" 
   ]
+
 subInventory :: GameState -> Char -> Item -> UI
 subInventory gs label item = AwaitingInput { uiRender: InventoryScreen (Just {label, item}) subInventoryUIHints, next }
   where

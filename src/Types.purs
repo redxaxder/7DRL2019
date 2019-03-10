@@ -14,9 +14,10 @@ module Types
 import Extra.Prelude
 
 import Control.Monad.State (State, modify_, get, runState, put)
+import Data.Array (catMaybes, find)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Array (catMaybes)
+import Data.Maybe (isJust)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.Lens.Zoom (zoom)
@@ -76,6 +77,7 @@ getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
 data UIRenderData = MainGame (Array UIHint)
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item}) (Array UIHint)
+  | ServeCustomerScreen (Array UIHint)
   | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord) (Array UIHint)
 
 
@@ -104,6 +106,9 @@ assembleUIHint (UIHint desc string) = "(" <> desc <> ") " <> string <> " "
 
 liftAtlasState :: forall a. State (Atlas Tile) a -> State GameState a
 liftAtlasState = zoom $ prop (SProxy :: SProxy "atlas")
+
+liftInventoryState :: forall a. State (Map Char Item) a -> State GameState a
+liftInventoryState = zoom $ prop (SProxy :: SProxy "inventory")
 
 liftCustomerState :: forall a. State CustomerState a -> State GameState a
 liftCustomerState = zoom $ prop (SProxy :: SProxy "customerState")
@@ -143,8 +148,9 @@ derive instance newtypeCustomerState :: Newtype CustomerState _
 customerStateFromGen :: Gen -> CustomerState
 customerStateFromGen rng = CustomerState { rng, customers: [], pending: Nothing }
 
-zoomCustomerState :: forall a. State CustomerState a -> State GameState a
-zoomCustomerState = zoom (prop (SProxy :: SProxy "customerState"))
+canServe :: Item -> GameState -> Boolean
+canServe item@(Item { itemType }) { customerState: CustomerState cs } =
+  isJust $ find (\c -> itemType == c.order) cs.customers
 
 serveCustomer :: Item -> State CustomerState Unit
 serveCustomer item@(Item { itemType }) = do

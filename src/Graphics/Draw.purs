@@ -18,13 +18,10 @@ import Types.Furniture (furnitureSprite)
 import Types.Item (itemSprite, itemName)
 import Types.Mob (mobSprite, mobName)
 
-visionRange :: Int -- TODO: move this to where it really lives
-visionRange = 10
-
 draw :: Context -> UIRenderData -> GameState -> Effect Unit
 draw ctx StartScreen _ = drawStartScreen ctx
 draw ctx ui@(InventoryScreen i _) gs = drawInventoryScreen ctx i (getUIHints ui) gs
-draw ctx ui gs = drawMain ctx ui gs
+draw ctx ui gs = drawMain ctx gs
 
 drawInventoryScreen :: Context -> Maybe { label:: Char, item :: Item } -> Array UIHint -> GameState  -> Effect Unit
 drawInventoryScreen ctx Nothing hints gs = do
@@ -58,8 +55,8 @@ getUIHints (InventoryScreen _ hints) = hints
 getUIHints (Crafting _ _ hints) = hints
 getUIHints _ = mempty
 
-drawMain :: Context -> UIRenderData -> GameState -> Effect Unit
-drawMain ctx ui gs = do
+drawMain :: Context -> GameState -> Effect Unit
+drawMain ctx gs = do
   clear ctx
   gs.fov # traverse_ \{ screen, tiles } ->
     drawSpriteToGrid ctx (spriteFromTileStack tiles) (toCornerRelative screen)
@@ -68,7 +65,7 @@ drawMain ctx ui gs = do
   drawVisible gs.mobs mobSprite
   drawSpriteToGrid ctx player (toCornerRelative zero)
   drawLog ctx gs
-  drawUIHints ctx (getUIHints ui)
+  -- drawUIHints ctx (getUIHints ui)
   pure unit
   where
 
