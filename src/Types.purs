@@ -13,7 +13,7 @@ module Types
 
 import Extra.Prelude
 
-import Control.Monad.State (State, modify_, get, runState)
+import Control.Monad.State (State, modify_, get, runState, put)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Array (catMaybes)
@@ -103,9 +103,54 @@ type Customer =
     , reward    :: Reward
     }
 
-rollCustomers :: Random (Array Customer)
-rollCustomers = while (chance 2) (map pure rollCustomer)
-  where
+data Reward = None | Multiple (Array Reward)
+derive instance eqReward :: Eq Reward
+
+applyReward :: Reward -> GameState -> GameState
+applyReward None = identity
+applyReward (Multiple rewards) =
+  foldr (\reward f -> applyReward reward <<< f) identity rewards
+
+applyReward' :: State GameState Unit
+applyReward' = do
+  gs <- get
+  let CustomerState cs = gs.customerState
+  cs.pending # maybe (pure unit) (modify_ <<< applyReward)
+  let newCS = CustomerState $ cs {pending = Nothing}
+  put $ gs {customerState = newCS}
+
+
+
+newtype CustomerState = CustomerState
+  { rng :: Gen
+  , customers :: Array Customer
+  , pending :: Maybe Reward
+  }
+
+derive instance newtypeCustomerState :: Newtype CustomerState _
+
+customerStateFromGen :: Gen -> CustomerState
+customerStateFromGen rng = CustomerState { rng, customers: [], pending: Nothing }
+
+zoomCustomerState :: forall a. State CustomerState a -> State GameState a
+zoomCustomerState = zoom (prop (SProxy :: SProxy "customerState"))
+
+serveCustomer :: Item -> State CustomerState Unit
+serveCustomer item@(Item { itemType }) = do
+  CustomerState cs <- get
+  case cs.pending of
+    Just _ -> pure unit
+    Nothing -> do
+      customer <- zoom (prop (SProxy :: SProxy "customers") >>> _Newtype) (pop (\c -> itemType == c.order))
+      let maybeReward = map _.reward customer
+      put <<< CustomerState $ cs { pending = maybeReward }
+
+tickCustomers :: State CustomerState Unit
+tickCustomers = modify_ \(CustomerState cs) ->
+  let
+
+    rollCustomers :: Random (Array Customer)
+    rollCustomers = while (chance 2) (map pure rollCustomer)
 
     rollOrder :: Random ItemType
     rollOrder = element orderable
@@ -123,31 +168,12 @@ rollCustomers = while (chance 2) (map pure rollCustomer)
       reward <- rollReward order
       pure { order, turnsLeft, reward }
 
+    { result, nextGen } = cs.rng # runRandom rollCustomers
 
+  in
+  CustomerState { rng: nextGen, customers: cs.customers <> result, pending: cs.pending }
 
-data Reward = None | Multiple (Array Reward)
-derive instance eqReward :: Eq Reward
-
-applyReward :: Reward -> GameState -> GameState
-applyReward None = identity
-applyReward (Multiple rewards) =
-  foldr (\reward f -> applyReward reward <<< f) identity rewards
-
-
-
-newtype CustomerState = CustomerState { rng :: Gen, customers :: Array Customer }
-derive instance newtypeCustomerState :: Newtype CustomerState _
-
-serveCustomer :: Item -> State CustomerState (Maybe Reward)
-serveCustomer item@(Item { itemType }) =
-  zoom (prop (SProxy :: SProxy "customers") >>> _Newtype) do
-    customer <- pop (\c -> itemType == c.order)
-    pure (_.reward <$> customer)
-
-customerStateFromGen :: Gen -> CustomerState
-customerStateFromGen rng = CustomerState { rng, customers: [] }
-
-tickCustomerState :: State CustomerState Unit
-tickCustomerState = modify_ \(CustomerState { rng, customers }) ->
-  let { result, nextGen } = rng # runRandom rollCustomers
-  in CustomerState { rng: nextGen, customers: customers <> result }
+getCustomers :: State CustomerState (Array Customer)
+getCustomers = do
+  CustomerState cs <- get
+  pure cs.customers

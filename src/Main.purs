@@ -27,7 +27,7 @@ import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
-import Types (GameState, LogEvent(..), Mob, liftMobState)
+import Types (GameState, LogEvent(..), Mob, liftMobState, tickCustomers, zoomCustomerState, applyReward')
 import Types.Mob (position, moveMob)
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
@@ -63,7 +63,7 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
+stepEnvironment = customers <<< doMobStuff <<< pickUpItem <<< tailRec expand
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -192,4 +192,17 @@ individualMonsterAction2 gs = do
     findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
       in not $ blocksMovement $ getElement targetPos gs.atlas
 
-  
+
+customers :: GameState -> GameState
+customers = execState $ do
+  zoomCustomerState tickCustomers
+
+  -- to hook in to game input/serving menu, we have:
+  -- serveCustomer :: Item -> State CustomerState Unit
+  _ <- pure unit -- TODO
+
+  -- to hook in to drawing/customer sidebar, we have:
+  -- getCustomers :: State CustomerState (Array Customer)
+  _ <- pure unit -- TODO
+
+  applyReward'
