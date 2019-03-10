@@ -17,15 +17,16 @@ init = do
   customerGen <- newGen
   let { atlas, player, placeholders, furniture } = initMap mapGen
   pure { atlas
+       , customerState: customerStateFromGen customerGen
+       , distanceMap: mempty
        , fov: mempty
        , furniture
        , inventory: mempty --exampleInventory
        , items: mempty --exampleItems
-       , placeholders
-       , mobs: exampleMobs
-       , player
        , logevents: mempty
-       , customerState: customerStateFromGen customerGen
+       , mobs: exampleMobs
+       , placeholders
+       , player
        }
 
 {-
