@@ -91,7 +91,7 @@ initMap g =
       atlasZero = mkAtlas errorRoom
       Tuple chartId atlas = addChart chart atlasZero
   in  { atlas
-      , player: Position { chartId, localPosition: V {x: 3,y: 1} }
+      , player: Position { chartId, localPosition: V {x: 3,y: 4} }
       , placeholders: Map.fromFoldable $ (\p -> Tuple p.position p) <$> exits chartId
       , furniture: furniture chartId
       }

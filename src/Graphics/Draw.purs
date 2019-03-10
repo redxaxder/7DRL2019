@@ -9,10 +9,19 @@ import Data.Map (Map, toUnfoldable)
 import Data.String.Common (toLower)
 
 import Atlas (Position)
-import Constants (displayDimensions, tileDimensions, white, canvasDimensions)
+import Constants (displayDimensions, tileDimensions, white, canvasDimensions, charHeight)
 import Data.Sprite (glitch, player, spriteAt)
 import Data.Tile (Tile, tileSprite)
-import Graphics.Render (Context, drawSpriteToGrid, drawText, clear, setFillStyle, getTextDimensions, charHeight, clearRegion)
+import Graphics.Render
+  ( Context
+  , drawSpriteToGrid
+  , drawText
+  , clear
+  , setFillStyle
+  , getTextDimensions
+  , clearRegion
+  , textOffset
+  )
 import Types (GameState, Item, UIRenderData(..), Sprite, getVisible, LogEvent(..), UIHint, assembleUIHint)
 import Types.Furniture (furnitureSprite)
 import Types.Item (itemSprite, itemName)
@@ -30,6 +39,7 @@ drawInventoryScreen :: Context -> Maybe { label:: Char, item :: Item } -> Array 
 drawInventoryScreen ctx Nothing hints gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   drawUIHints ctx hints
+  clearRegion ctx { x: uiLeftCoord, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (toNumber (length items + 1))}
   drawText ctx uiLeftCoord 0.0 "Inventory" 
   void $ flip traverseWithIndex items \ix (Tuple c item) ->
     drawText ctx
@@ -40,7 +50,7 @@ drawInventoryScreen ctx Nothing hints gs = do
 drawInventoryScreen ctx (Just {label, item}) hints gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   drawUIHints ctx hints
-  --clearRegion ctx { x: uiLeftCoord, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (length items + 1)}
+  clearRegion ctx { x: uiLeftCoord, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (toNumber (length items + 1))}
   drawText ctx
     uiLeftCoord
     0.0
@@ -50,7 +60,11 @@ drawStartScreen :: Context -> Effect Unit
 drawStartScreen ctx = do
   clear ctx
   setFillStyle ctx white
-  drawText ctx uiLeftCoord 154.0 "Press any key to start" 
+  drawText ctx uiLeftCoord (154.0                   ) "You find an interdimensional dungeon"
+  drawText ctx uiLeftCoord (154.0 +       charHeight) "entrance in the pantry of your"
+  drawText ctx uiLeftCoord (154.0 + 2.0 * charHeight) "failing restaurant."
+  drawText ctx uiLeftCoord (154.0 + 3.0 * charHeight) "The Monsters are delicious!"
+  drawText ctx uiLeftCoord (154.0 + 4.0 * charHeight) "Go!  Save your restaurant!"
 
 getUIHints :: UIRenderData -> Array UIHint
 getUIHints (MainGame hints) = hints
@@ -58,7 +72,6 @@ getUIHints (InventoryScreen _ hints) = hints
 getUIHints (Crafting _ _ hints) = hints
 getUIHints StartScreen = mempty
 getUIHints (ServeCustomerScreen hints) = hints
--- getUIHints _ = mempty
 
 drawMain :: Context -> GameState -> Array UIHint -> Effect Unit
 drawMain ctx gs hints = do
@@ -97,7 +110,7 @@ drawLog :: Context -> GameState -> Effect Unit
 drawLog ctx gs = sequence_ $ map drawLogItem (zip (range 1 logLines) (take logLines gs.logevents))
   where
     drawLogItem :: Tuple Int LogEvent -> Effect Unit
-    drawLogItem (Tuple index evt) = drawText ctx uiLeftCoord ((toNumber index) * charHeight) (logString evt)
+    drawLogItem (Tuple index evt) = drawText ctx (uiLeftCoord + 147.0) ((toNumber index) * charHeight) (logString evt)
 
     logString :: LogEvent -> String
     logString (ItemEvent item) = "Acquired " <> toLower (itemName item) <> "!"

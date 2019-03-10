@@ -5,6 +5,12 @@ import Extra.Prelude
 font :: String
 font = "16px monospace"
 
+charWidth :: Number
+charWidth = 10.0
+
+charHeight :: Number
+charHeight = 16.0
+
 tileDimensions :: { width ∷ Int, height ∷ Int }
 tileDimensions =
   { width: 32
