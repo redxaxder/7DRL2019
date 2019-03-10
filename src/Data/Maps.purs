@@ -20,7 +20,7 @@ getTerrain :: MapData -> Array String
 getTerrain = _.terrain <<< un MapData
 
 rooms :: Array MapData
-rooms = [ sampleMap1, sampleMap2, sampleHall1, sampleHall2, staircase, hardMode ]
+rooms = [ sampleMap1, sampleMap2, sampleMap3, sampleHall1, sampleHall2, staircase, hardMode ]
 
 roomsByRegion :: Map Region (NonEmptyArray MapData)
 roomsByRegion = Map.fromFoldable do
@@ -74,6 +74,31 @@ sampleMap2 = m [Cave]
   , "#...........#"
   , "#...........>"
   , "!.###########"
+  ]
+
+sampleMap3 :: MapData
+sampleMap3 = m [Cave]
+  [ "###222##6666......5#"
+  , "<8.1222......7###..4"
+  , "##.#1##.###322#^##.4"
+  , "!..#1##.###3###3##.4"
+  , "##.#....###3###....4"
+  , "11.#.###1113#...#111"
+  , "11...6?###....#3#1##"
+  , "#8##6###...55##34?#^"
+  , "#.?#.....###5.?#4111"
+  , "#....33...111###4##4"
+  , "###7##..####22?21111"
+  , "#<7.55.11##1112211##"
+  , "##1.11.51111###2214>"
+  , "##8##..71##11111#1##"
+  , "#?.6..#?##3?1####?##"
+  , "###3.##v###1177##11#"
+  , "##5...####61151>##11"
+  , "##v##.####71#8###111"
+  , "####2.##<4.....11?1#"
+  , "#^###.####..#4.##1##"
+  , "#2?66......###v##44>"
   ]
 
 sampleHall1 :: MapData
