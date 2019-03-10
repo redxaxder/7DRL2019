@@ -3,7 +3,13 @@ module Main where
 import Extra.Prelude
 
 import Control.Monad.Rec.Class (tailRec, Step(..))
-import Control.Monad.State (execState, State, get, modify_)
+import Control.Monad.State
+  ( execState
+  , State
+  , get
+  , modify_
+  , evalState
+  )
 import Data.Array (cons, find, filter)
 import Data.Array as Array
 import Data.Array.NonEmpty (cons', head, sortBy)
@@ -29,7 +35,17 @@ import Graphics.Render (initCanvas)
 import Init (init)
 import Intent (Action(..))
 import Map.Gen (expandMap)
-import Types (GameState, LogEvent(..), Mob, liftMobState)
+import Types
+  ( GameState
+  , LogEvent(..)
+  , Mob
+  , liftMobState
+  , tickCustomers
+  , liftCustomerState
+  , applyReward'
+  , serveCustomer
+  , liftInventoryState
+  )
 import Types.Mob (position, moveMob')
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
@@ -69,6 +85,7 @@ stepEnvironment = tailRec expand
   >>> pickUpItem
   >>> updateDistanceMap
   >>> doMobStuff
+  >>> customers
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -84,6 +101,7 @@ updateDistanceMap :: GameState -> GameState
 updateDistanceMap gs = gs { distanceMap = makeDistanceMap 10 gs.player gs.atlas }
 
 handleAction :: GameState -> Action -> Maybe GameState
+
 handleAction gs (Move dir) =
   let player = move dir gs.atlas gs.player
       atlas = gs.atlas
@@ -92,9 +110,20 @@ handleAction gs (Move dir) =
                       then Nothing
                       else Just $ gs { player = player, atlas = atlas }
         Just a -> Just $ doAttack gs player
+
 handleAction gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
   in Just $ gs { inventory = inventory }
+
+handleAction gs (Serve itemChar) = flip evalState gs do
+  mitem <- liftInventoryState $ Map.lookup itemChar <$> get
+  case mitem of
+    Nothing -> pure Nothing
+    Just item -> do
+      liftCustomerState (serveCustomer item)
+      liftInventoryState $ modify_ $ delete itemChar
+      Just <$> get
+
 handleAction gs Pass = Just gs
 
 letters :: Set.Set Char
@@ -205,4 +234,8 @@ individualMonsterAction2 gs = do
     findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
       in not $ blocksMovement $ getElement targetPos gs.atlas
 
-  
+
+customers :: GameState -> GameState
+customers = execState $ do
+  liftCustomerState tickCustomers
+  applyReward'
