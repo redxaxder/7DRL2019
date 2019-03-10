@@ -1,3 +1,3 @@
 #!/bin/bash
 
-make clean package && butler push target redxaxder/runed:HTML5
+make clean package && butler push target redxaxder/Breadsword:HTML5
