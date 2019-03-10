@@ -49,7 +49,6 @@ drawSpriteToGrid (Context {context, spritesheet}) (Sprite { offsetX, offsetY }) 
   in
   Canvas.drawImageFull context spritesheet sourceX sourceY w h canvasX canvasY w h
 
-
 charWidth :: Number
 charWidth = 10.0
 
@@ -59,8 +58,8 @@ charHeight = 16.0
 getTextDimensions :: String -> { width :: Number, height :: Number }
 getTextDimensions t = { width: charWidth * (toNumber $ String.length t), height: charHeight }
 
-drawText :: Context -> String -> Number -> Number -> Effect Unit
-drawText ctx@(Context {context}) text x y = do
+drawText :: Context -> Number -> Number -> String -> Effect Unit
+drawText ctx@(Context {context}) x y text = do
   let {width, height} = getTextDimensions text
   clearRegion ctx {x,y, width, height}
   setFillStyle ctx white

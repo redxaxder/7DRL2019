@@ -72,10 +72,10 @@ getVisible :: forall a. FieldOfView -> Map Position a -> Array { a :: a, screen 
 getVisible fov m = catMaybes $ flip map fov $ \{ screen, absolute } ->
   map (\a -> { a, screen }) $ Map.lookup absolute m
 
-data UIRenderData = MainGame
+data UIRenderData = MainGame (Array UIHint)
   | StartScreen
-  | InventoryScreen (Maybe {label :: Char, item :: Item})
-  | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord)
+  | InventoryScreen (Maybe {label :: Char, item :: Item}) (Array UIHint)
+  | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord) (Array UIHint)
 
 
 type MapGenHint = { rng :: Gen, region :: Region }
@@ -89,13 +89,23 @@ data LogEvent = ItemEvent Item
               | MonsterKilledEvent Mob
               | PlayerAttacked Mob
 
+type Key = String
+data UIHint = UIHint Key String
+
+assembleUIHint :: UIHint -> String
+assembleUIHint (UIHint "KeyC" string) = "(c) " <> string <> " "
+assembleUIHint (UIHint "KeyD" string) = "(d) " <> string <> " "
+assembleUIHint (UIHint "KeyI" string) = "(i) " <> string <> " "
+assembleUIHint (UIHint "Escape" string) = "(esc) " <> string <> " "
+assembleUIHint (UIHint "Space" string) = "(space) " <> string <> " "
+assembleUIHint (UIHint "Period" string) = "(.) " <> string <> " "
+assembleUIHint (UIHint desc string) = "(" <> desc <> ") " <> string <> " "
+
 liftAtlasState :: forall a. State (Atlas Tile) a -> State GameState a
 liftAtlasState = zoom $ prop (SProxy :: SProxy "atlas")
 
 liftCustomerState :: forall a. State CustomerState a -> State GameState a
 liftCustomerState = zoom $ prop (SProxy :: SProxy "customerState")
-
-
 
 type Customer =
     { order     :: ItemType
