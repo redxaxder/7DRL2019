@@ -17,7 +17,8 @@ import Data.Maps (getTerrain)
 import Direction (Direction(..))
 import Direction as Dir
 import Random (Random, branch, chance, element)
-import Types (Furniture, Item, MapData, MobType, Placeholder, Region(..), Tile(..))
+import Types (Furniture, Item, MapData, MobType, Placeholder, Region(..), Tile(..), Mob)
+import Types.Mob (mkMob)
 import Types.Furniture (mkFurniture)
 import Types.Item (mkItem)
 import Data.Item (itemByChar)
@@ -32,14 +33,14 @@ load
             , entrance :: LocalPosition
             , furniture :: ChartId -> Map Position Furniture
             , items :: ChartId -> Map Position Item
-            --, mobs :: ChartId -> Array Mob
+            , mobs :: ChartId -> Array Mob
             }
 load mapData region rotation = do
   mapTokens <- rotate rotation
     <$> (sequence <<< map sequence) (toMapTokens region (getTerrain mapData))
   let indexedMap = addIndices mapTokens
       tiles = (map <<< map) (getTile region) mapTokens
-      protoExits = catMaybes $ flip map (indexedMap) $ \{ x, y, a } ->
+      protoExits = catMaybes $ flip map indexedMap $ \{ x, y, a } ->
                      case a of
                           Exit dir -> Just { localPosition: V {x,y}, dir }
                           _ -> Nothing
@@ -48,6 +49,10 @@ load mapData region rotation = do
         , position: Position { chartId, localPosition}
         , next
         }
+      protoMobs = catMaybes $ flip map indexedMap $ \{ x, y, a } ->
+                    case a of
+                         Monster mt -> Just { localPosition: V {x,y}, mt }
+                         _ -> Nothing
       entrance = case find ((eq Entrance) <<< _.a) indexedMap of
         Nothing -> V { x:100, y:1000 } -- no entrance marker in template; just add one wherever
         Just {x,y} -> V { x, y }
@@ -56,7 +61,9 @@ load mapData region rotation = do
       chart = mkChart (Wall Cave) tiles
   generators <- traverse (\_ -> branch) protoExits
   let exits cid = zipWith (mkExit cid) protoExits (( \rng -> {rng, region}) <$> generators )
-  pure $ { chart, exits, entrance, furniture, items }
+      mobs chartId = protoMobs # map \{localPosition, mt } ->
+                       mkMob mt (Position { localPosition, chartId})
+  pure $ { chart, exits, entrance, furniture, items, mobs }
 
 placeFurniture :: IxArray MapToken -> ChartId -> Map Position Furniture
 placeFurniture mapTokens chartId = Map.fromFoldable $ catMaybes

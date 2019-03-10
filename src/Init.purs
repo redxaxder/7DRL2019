@@ -26,7 +26,7 @@ init = do
        , inventory: mempty
        , items: mempty --exampleItems
        , logevents: mempty
-       , mobs: exampleMobs
+       , mobs: mempty -- exampleMobs
        , placeholders
        , player
        }
