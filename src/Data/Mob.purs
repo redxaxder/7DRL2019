@@ -7,6 +7,7 @@ module Data.Mob
 
 import Extra.Prelude
 
+import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Map (Map)
 import Data.Map as Map
 import Partial.Unsafe (unsafePartial)
@@ -48,11 +49,11 @@ mobRecords =
   , n 6 0 "Tomatosaurus"        5 "whole tomato"
   , n 7 0 "Meatotaur"           5 "raw meat"
   , n 1 1 "Deep Lettuce"        5 "deep lettuce"
-  , m 0 1 "Bananamatronic Husk" 5
+  --, m 0 1 "Bananamatronic Husk" 5
   ]
 
-mobs :: Array MobType
-mobs = _.mobType <$> mobRecords
+mobs :: NonEmptyArray MobType
+mobs = unsafeFromJust $ fromArray $ _.mobType <$> mobRecords
 
 mobMap :: Map MobType MobRecord
 mobMap = keyBy _.mobType mobRecords
