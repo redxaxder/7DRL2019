@@ -19,6 +19,7 @@ import Atlas (move, getElement, Position)
 import Combat (doAttack, attackPlayer)
 import Data.Tile (blocksMovement)
 import Direction (Direction(..))
+import DistanceMap (makeDistanceMap)
 import FOV (visibleTiles)
 import FRP.Event (create, subscribe, sampleOn)
 import FRP.Event.Keyboard (down)
@@ -63,7 +64,10 @@ update :: GameState -> Action -> Maybe GameState
 update gs a = stepEnvironment <$> handleAction gs a
 
 stepEnvironment :: GameState -> GameState
-stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
+stepEnvironment = tailRec expand
+  >>> pickUpItem
+  >>> updateDistanceMap
+  >>> doMobStuff
   where
   expand :: GameState -> Step GameState GameState
   expand gs = let gs' = updateFOV gs
@@ -74,6 +78,9 @@ stepEnvironment = doMobStuff <<< pickUpItem <<< tailRec expand
 
 updateFOV :: GameState -> GameState
 updateFOV gs = gs { fov = visibleTiles 10 gs }
+
+updateDistanceMap :: GameState -> GameState
+updateDistanceMap gs = gs { distanceMap = makeDistanceMap 10 gs.player gs.atlas }
 
 handleAction :: GameState -> Action -> Maybe GameState
 handleAction gs (Move dir) =
