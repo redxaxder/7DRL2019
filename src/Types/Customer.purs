@@ -4,6 +4,7 @@ import Extra.Prelude
 
 import Control.Monad.State (State, get, put, modify_)
 import Data.Lens.Record (prop)
+import Data.Lens.Setter (over)
 import Data.Lens.Zoom (zoom)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Symbol (SProxy(..))
@@ -20,6 +21,10 @@ type Customer =
     }
 
 data Reward = None | Multiple (Array Reward)
+
+displayReward :: Reward -> String
+displayReward None = "gratitude"
+displayReward (Multiple rewards) = intercalate ", " (map displayReward rewards)
 
 derive instance eqReward :: Eq Reward
 
@@ -51,13 +56,13 @@ tickCustomers = modify_ \(CustomerState cs) ->
   let
 
     rollCustomers :: Random (Array Customer)
-    rollCustomers = while (chance 2) (map pure rollCustomer)
+    rollCustomers = while (chance 10) (map pure rollCustomer)
 
     rollOrder :: Random ItemType
     rollOrder = element orderable
 
     rollTurnsLeft :: ItemType -> Random Int
-    rollTurnsLeft _ = intRange 100 200
+    rollTurnsLeft _ = intRange 250 500
 
     rollReward :: ItemType -> Random Reward
     rollReward _ = pure None
@@ -69,11 +74,14 @@ tickCustomers = modify_ \(CustomerState cs) ->
       reward <- rollReward order
       pure { order, turnsLeft, reward }
 
-    { result, nextGen } = cs.rng # runRandom rollCustomers
+    { result, nextGen } = runRandom rollCustomers cs.rng
+
+    customers' = cs.customers # map
+      (over (prop $ SProxy :: SProxy "turnsLeft") (_ - 1))
 
   in CustomerState
       { rng: nextGen
-      , customers: cs.customers <> result
+      , customers: customers' <> result
       , pending: cs.pending
       }
 

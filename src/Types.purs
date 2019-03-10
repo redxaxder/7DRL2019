@@ -77,7 +77,11 @@ data UIRenderData
   | StartScreen
   | InventoryScreen (Maybe {label :: Char, item :: Item}) (Array UIHint)
   | ServeCustomerScreen (Array UIHint)
-  | Crafting (Array { label :: Char, item :: Item }) (Array RecipeRecord) (Array UIHint)
+  | Crafting
+      (Array { label :: Char, item :: Item })
+      (Array RecipeRecord)
+      (Array UIHint)
+      (Maybe FurnitureType)
 
 type MapGenHint = { rng :: Gen, region :: Region }
 
