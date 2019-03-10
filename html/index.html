@@ -4,7 +4,7 @@
   <div style="text-align: center"><canvas id="game" width="0" height="0"></canvas></div>
   <script src="game.js"></script>
   <script>
-    window.addEventListener("keydown", function(e) {
+    document.addEventListener("keydown", function(e) {
         // space and arrow keys
         if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
             e.preventDefault();
