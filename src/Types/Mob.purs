@@ -32,7 +32,10 @@ position :: Mob -> Position
 position (Mob m) = m.position
 
 moveMob :: Direction -> Atlas Tile -> Mob -> Mob
-moveMob d atlas (Mob m) = Mob (m { position = move d atlas m.position })
+moveMob d atlas mob@(Mob m) = moveMob' (move d atlas m.position) mob
+
+moveMob' :: Position -> Mob -> Mob
+moveMob' p (Mob m) = Mob (m { position = p })
 
 mobName :: Mob -> String
 mobName = _.name <<< getMobRecord <<< mobType
