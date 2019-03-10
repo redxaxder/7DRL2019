@@ -40,7 +40,7 @@ drawInventoryScreen ctx Nothing hints gs = do
   let items = toUnfoldable gs.inventory :: Array (Tuple Char Item)
   drawUIHints ctx hints
   clearRegion ctx { x: uiLeftCoord, y: 0.0, width: 1000.0, height: textOffset.y + charHeight * (toNumber (length items + 1))}
-  drawText ctx uiLeftCoord 0.0 "Inventory" 
+  drawText ctx uiLeftCoord 0.0 "Inventory"
   void $ flip traverseWithIndex items \ix (Tuple c item) ->
     drawText ctx
     uiLeftCoord

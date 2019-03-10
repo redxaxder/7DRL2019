@@ -45,7 +45,7 @@ mainUIHints =
   , UIHint "KeyI" "Inventory"
   , UIHint "Period" "Pass"
   ]
-  
+
 main :: GameState -> UI
 main gs = AwaitingInput { uiRender: MainGame mainUIHints, next }
   where
@@ -73,7 +73,7 @@ moveOrCraft gs d =
                                else crafting gs mempty
 
 chooseItemHints :: Array UIHint
-chooseItemHints = 
+chooseItemHints =
   [ UIHint "Escape" "Back"
   ]
 
@@ -130,7 +130,7 @@ inventory gs = AwaitingInput { uiRender: InventoryScreen Nothing inventoryUIHint
 subInventoryUIHints :: Array UIHint
 subInventoryUIHints =
   [ UIHint "KeyD" "Drop"
-  , UIHint "Escape" "Deselect" 
+  , UIHint "Escape" "Deselect"
   ]
 
 subInventory :: GameState -> Char -> Item -> UI

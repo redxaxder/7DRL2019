@@ -39,13 +39,12 @@ import Types
   , LogEvent(..)
   , Mob
   , liftMobState
-  , tickCustomers
   , liftCustomerState
   , applyReward'
-  , serveCustomer
   , liftInventoryState
   , Action(..)
   )
+import Types.Customer (tickCustomers, serveCustomer)
 import Types.Mob (position, moveMob')
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
@@ -166,7 +165,7 @@ monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.va
     individualMonsterAction mob gs' = let mobPos = position mob in
       case playerAdjacent mobPos of
         Just dir -> attackPlayer gs' mob
-        Nothing -> let 
+        Nothing -> let
             findEmptySpace :: Position -> Maybe Direction
             findEmptySpace = findAdjacent findEmptySpaceDirection
 
@@ -180,10 +179,10 @@ monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.va
                   targetPos = move moveDir gs'.atlas mobPos
               in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
             Nothing -> gs'
-          
+
     playerAdjacent :: Position -> Maybe Direction
     playerAdjacent = findAdjacent playerAdjacentDirection
-    
+
     playerAdjacentDirection :: Position -> Direction -> Boolean
     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
@@ -223,7 +222,7 @@ individualMonsterAction2 gs = do
   where
     playerAdjacent :: Position -> Maybe Direction
     playerAdjacent = findAdjacent playerAdjacentDirection
-    
+
     playerAdjacentDirection :: Position -> Direction -> Boolean
     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
@@ -236,6 +235,4 @@ individualMonsterAction2 gs = do
 
 
 customers :: GameState -> GameState
-customers = execState $ do
-  liftCustomerState tickCustomers
-  applyReward'
+customers = execState (liftCustomerState tickCustomers *> applyReward')

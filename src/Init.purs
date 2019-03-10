@@ -6,12 +6,12 @@ import Atlas (Position(..), ChartId(..))
 import Data.Mob (mobs)
 import Map.Gen (initMap)
 import Random (newGen)
-import Types (GameState, Mob, customerStateFromGen)
-import Types.Item (Item)
+import Types (GameState, Mob)
+import Types.Customer (customerStateFromGen)
 import Types.Mob (mkMob, position)
 
 import Data.Array.NonEmpty (head)
-import Data.Map (Map, fromFoldable)
+import Data.Map (Map)
 
 init :: Effect GameState
 init = do
@@ -24,21 +24,12 @@ init = do
        , fov: mempty
        , furniture
        , inventory: mempty
-      --  , inventory: exampleInventory
        , items: mempty --exampleItems
        , logevents: mempty
        , mobs: exampleMobs
        , placeholders
        , player
        }
-
--- exampleInventory :: Map Char Item
--- exampleInventory = todo fromFoldable
---   [ 'a' |> { name: "Apple" }
---   , 'b' |> { name: "Banapple" }
---   , 'c' |> { name: "Crabapple" }
---   , 'd' |> { name: "Dapple" }
---   ]
 
 exampleMobs :: Map Position Mob
 exampleMobs = keyBy position [mob]
