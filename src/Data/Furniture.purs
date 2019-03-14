@@ -13,7 +13,6 @@ import Extra.Prelude
 
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Foldable (find)
 import Data.String.Common (toLower)
 
 import Data.Attribute (Attribute (..))
@@ -69,4 +68,3 @@ stringToFurnitureType name = fromJust $ furniture # find \item -> toLower (getFu
 
 hasAttribute :: FurnitureType -> Attribute -> Boolean
 hasAttribute t attr = elem attr (getFurnitureRecord t).attributes
-

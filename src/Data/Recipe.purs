@@ -10,6 +10,7 @@ import Partial.Unsafe (unsafePartial)
 import Data.Attribute (Attribute(..))
 import Data.Furniture (FurnitureType, stringToFurnitureType)
 import Data.Furniture as Furniture
+import Data.Either (fromRight)
 import Data.Item (stringToItemType, hasAttribute)
 import Types.Item (Item, ItemType, itemType)
 
@@ -55,7 +56,7 @@ recipeCanUse :: RecipeRecord -> ItemType -> Boolean
 recipeCanUse {inputs} it = any (\input -> suitable input it) inputs
 
 mats :: RecipeRecord -> Array ItemType
-mats r = map (unsafePartial \x -> case x of Right a -> a) (filter (either (const false) (const true)) r.inputs)
+mats r = map (unsafePartial fromRight) (filter (either (const false) (const true)) r.inputs)
 
 haveMats :: Map Char Item -> RecipeRecord -> Boolean
 haveMats inventory recipe =

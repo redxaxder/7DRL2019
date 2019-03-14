@@ -6,7 +6,6 @@ module Types.Furniture
 import Extra.Prelude
 
 import Data.Furniture (FurnitureType, getFurnitureRecord, counter)
-import Data.Attribute (Attribute)
 import Data.Sprite (Sprite)
 
 newtype Furniture = Furniture { furnitureType :: FurnitureType } --TODO: add relevant furniture state here

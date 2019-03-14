@@ -2,11 +2,9 @@ module Graphics.Draw where
 
 import Extra.Prelude
 
-import Control.Monad.State (evalState)
 import Data.Array (head, filter, take)
 import Data.Enum (enumFromTo)
 import Data.Array.NonEmpty as NE
-import Data.Foldable (maximum)
 import Data.String.CodeUnits (singleton)
 import Data.Map (Map, toUnfoldable)
 import Data.String.Common (toLower)
@@ -37,7 +35,6 @@ import Types
   , getVisible
   , getUIHints
   )
-import Types.Customer (Customer, getCustomers, displayReward)
 import Types.Furniture (furnitureSprite)
 import Types.Mob (mobSprite, mobName)
 

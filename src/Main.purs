@@ -16,7 +16,6 @@ import Data.Array.NonEmpty (cons', head, sortBy)
 import Data.Enum (enumFromTo)
 import Data.Map (delete, lookup)
 import Data.Map as Map
-import Data.Maybe (isJust)
 import Data.Set as Set
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)

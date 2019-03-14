@@ -14,10 +14,9 @@ module Types
 import Extra.Prelude
 
 import Control.Monad.State (State, modify_, get, runState, put)
-import Data.Array (catMaybes, find)
+import Data.Array (catMaybes)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (isJust)
 import Data.Lens.Record (prop)
 import Data.Lens.Zoom (zoom)
 import Data.Symbol (SProxy(..))

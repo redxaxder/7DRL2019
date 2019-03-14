@@ -5,7 +5,6 @@ module Map.Load
 import Extra.Prelude
 
 import Data.Array (unsnoc, cons, concat, catMaybes, zipWith)
-import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Map (Map)
 import Data.Map as Map

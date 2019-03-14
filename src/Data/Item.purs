@@ -14,7 +14,6 @@ import Extra.Prelude
 
 import Data.Array (filter)
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
-import Data.Foldable (find)
 import Data.Map (Map)
 import Data.Map as Map
 
