@@ -3,7 +3,7 @@ module Graphics.Draw where
 import Extra.Prelude
 
 import Control.Monad.State (evalState)
-import Data.Array (take, zip, range, cons, scanl, (..))
+import Data.Array (head, filter, take)
 import Data.Enum (enumFromTo)
 import Data.Array.NonEmpty as NE
 import Data.Foldable (maximum)
@@ -12,11 +12,11 @@ import Data.Map (Map, toUnfoldable)
 import Data.String.Common (toLower)
 
 import Atlas (Position)
-import Constants (canvasDimensions, charHeight, displayDimensions, white, blue, gray)
-import Data.Furniture (getFurnitureRecord, FurnitureType)
-import Data.Item (getItemRecord)
+import Constants (displayDimensions, white, gray)
+import Data.Furniture (FurnitureType)
+import Data.Item (itemSprite, itemName, itemNameFromType)
 import Data.Recipe (RecipeRecord)
-import Data.Sprite (glitch, player, spriteAt)
+import Data.Sprite (glitch, player)
 import Data.Tile (Tile, tileSprite)
 import Graphics.Render
   ( Context
@@ -25,9 +25,6 @@ import Graphics.Render
   , drawLinesToGrid
   , clear
   , setFillStyle
-  , getTextDimensions
-  , clearRegion
-  , textOffset
   )
 import Types
   ( GameState
@@ -38,12 +35,10 @@ import Types
   , UIRenderData(..)
   , assembleUIHint
   , getVisible
-  , liftCustomerState
   , getUIHints
   )
 import Types.Customer (Customer, getCustomers, displayReward)
 import Types.Furniture (furnitureSprite)
-import Types.Item (itemSprite, itemName)
 import Types.Mob (mobSprite, mobName)
 
 draw :: Context -> UIRenderData -> GameState -> Effect Unit
@@ -175,7 +170,7 @@ drawCrafting
   -> Array RecipeRecord -> Maybe FurnitureType -> Effect Unit
 drawCrafting ctx gs selectedItems recipes furniture = do-- drawTODO ctx
   let
-      getColor :: Tuple Char Item  -> Color
+      -- getColor :: Tuple Char Item  -> Color
       getColor (Tuple c i) = case head $ filter (\x -> x.label == c) selectedItems of
                           Nothing -> gray
                           Just a -> white
@@ -187,7 +182,7 @@ drawCrafting ctx gs selectedItems recipes furniture = do-- drawTODO ctx
   itemString  (Tuple c i) = (singleton c) <> ") " <> (itemName i)
   drawRecipe :: Int -> RecipeRecord -> Effect Unit
   drawRecipe ix recipe = do
-    drawTextToGrid ctx (getColor ix) (itemName $ mkItem recipe.output) (V {x: 43, y: 4 + ix})
+    drawTextToGrid ctx (getColor ix) (itemNameFromType recipe.output) (V {x: 43, y: 4 + ix})
     where getColor i = case i of
                       0 -> white
                       _ -> gray

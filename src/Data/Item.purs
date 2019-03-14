@@ -1,9 +1,11 @@
 module Data.Item
-  ( ItemType
-  , items
+  ( items
   , orderable
   , getItemRecord
   , itemByChar
+  , itemName
+  , itemNameFromType
+  , itemSprite
   , stringToItemType
   , hasAttribute
   ) where
@@ -19,10 +21,7 @@ import Data.Map as Map
 import Data.Attribute (Attribute(..))
 import Data.Sprite (Sprite, spriteAt)
 import Data.String.Common (toLower)
-
-newtype ItemType = ItemType String
-derive instance eqItemName :: Eq ItemType
-derive instance ordItemName :: Ord ItemType
+import Types.Item (Item, ItemType(..), itemType)
 
 type ItemRecord =
   { itemType :: ItemType
@@ -32,6 +31,7 @@ type ItemRecord =
   , attributes :: Array Attribute
   , canOrder :: Boolean
   }
+
 
 i :: Char -> Int -> Int -> String -> Array String -> ItemRecord
 i c = mkItemRecord false (Just c)
@@ -72,6 +72,15 @@ items = _.itemType <$> itemRecords
 
 itemMap :: Map ItemType ItemRecord
 itemMap = keyBy _.itemType itemRecords
+
+itemName :: Item -> String
+itemName = _.name <<< getItemRecord <<< itemType
+
+itemNameFromType :: ItemType -> String
+itemNameFromType = _.name <<< getItemRecord
+
+itemSprite :: Item -> Sprite
+itemSprite = _.sprite <<< getItemRecord <<< itemType
 
 orderable :: NonEmptyArray ItemType
 orderable = unsafeFromJust $ fromArray $ filter (_.canOrder <<< getItemRecord) items

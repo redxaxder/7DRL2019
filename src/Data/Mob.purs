@@ -13,7 +13,8 @@ import Data.Map as Map
 import Partial.Unsafe (unsafePartial)
 
 import Data.Sprite (Sprite, spriteAt)
-import Data.Item (ItemType, stringToItemType)
+import Data.Item (stringToItemType)
+import Types.Item (ItemType)
 
 newtype MobType = MobType String
 derive instance eqMobType :: Eq MobType

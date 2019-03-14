@@ -10,7 +10,7 @@ import Control.Monad.State
   , modify_
   , evalState
   )
-import Data.Array (cons, find, filter)
+import Data.Array (cons, filter)
 import Data.Array as Array
 import Data.Array.NonEmpty (cons', head, sortBy)
 import Data.Enum (enumFromTo)
@@ -25,6 +25,7 @@ import Partial.Unsafe (unsafePartial)
 import Atlas (move, getElement, Position)
 import Combat (doAttack, attackPlayer)
 import Data.Tile (blocksMovement)
+import Data.Recipe (haveMats, mats)
 import Direction (Direction(..))
 import DistanceMap (makeDistanceMap)
 import FOV (visibleTiles)
@@ -45,6 +46,7 @@ import Types
   , Action(..)
   )
 import Types.Customer (tickCustomers, serveCustomer)
+import Types.Item (Item, ItemType, itemType, mkItem)
 import Types.Mob (position, moveMob')
 import UserInterface (Key, UI(..), UIAwaitingInput, uiInit)
 
@@ -127,24 +129,21 @@ handleAction gs (Craft recipe) =
   case recipe of
     Nothing -> Just gs
     Just rec ->
-    -- let
-      -- inputs = recipe.inputs -- Type Array RecipeInput
-      if haveMats gs.inventory rec then
+      if haveMats gs.inventory rec then -- Check that we have the mats to make this safe
           let
               deleteLeastByItemType :: ItemType -> Map.Map Char Item -> Map.Map Char Item
               deleteLeastByItemType it inv = delete c inv
                 where
-                  c = fst $ (unsafePartial case (Array.head charItemArray) of Just a -> a) -- Crashes if you don't have the items to craft?!?!
+                  c = fst $ (unsafePartial fromJust $ Array.head charItemArray)
                   charItemArray :: Array (Tuple Char Item)
-                  charItemArray = filter selectItem (toUnfoldable inv)
-                  selectItem (Tuple char item) = item == mkItem it
+                  charItemArray = filter selectItem (Map.toUnfoldable inv)
+                  selectItem (Tuple char item) = itemType item == it
               inventory' = foldr deleteLeastByItemType gs.inventory (mats rec)
               inventory'' = flip (flip Map.insert (mkItem rec.output)) inventory' <$> (getInventorySlot gs)
             in case inventory'' of
                   Nothing -> Nothing
                   Just a -> Just (gs {inventory = a})
         else Nothing
-      -- in Just gs {inventory = inventory}
 
 
 handleAction gs Pass = Just gs
@@ -173,54 +172,44 @@ findAdjacent :: (Position -> Direction -> Boolean)
 findAdjacent f pos = find (f pos) [R, L, U, D]
 
 passable :: GameState -> Position -> Boolean
-passable gs pos = not ((blocksMovement $ getElement pos gs.atlas) || (pos == gs.player) || (isJust $ lookup pos gs.mobs))
--- Mob -> Tuple (Mob a)
--- liftMobStuff :: State Mob a -> State GameState a
--- liftMobStuff = todo
+passable gs pos = not ((blocksMovement $ getElement pos gs.atlas)
+                    || (pos == gs.player)
+                    || (isJust $ lookup pos gs.mobs))
 
--- first try R, L, then U, D
--- if player adjacent, attack player
--- if blocksMovement direction, then try next direction
--- if neither, move into space
-monsterAction :: GameState -> GameState
-monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.values gs.mobs)
-  where
-    individualMonsterAction :: Mob -> GameState -> GameState
-    individualMonsterAction mob gs' = let mobPos = position mob in
-      case playerAdjacent mobPos of
-        Just dir -> attackPlayer gs' mob
-        Nothing -> let
-            findEmptySpace :: Position -> Maybe Direction
-            findEmptySpace = findAdjacent findEmptySpaceDirection
-
-            findEmptySpaceDirection :: Position -> Direction -> Boolean
-            findEmptySpaceDirection pos dir = let targetPos = move dir gs'.atlas pos
-              -- in not $ blocksMovement $ getElement targetPos gs.atlas
-              in passable gs' targetPos
-          in case findEmptySpace mobPos of
-            Just moveDir ->
-              let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
-                  targetPos = move moveDir gs'.atlas mobPos
-              in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
-            Nothing -> gs'
-
-    playerAdjacent :: Position -> Maybe Direction
-    playerAdjacent = findAdjacent playerAdjacentDirection
-
-    playerAdjacentDirection :: Position -> Direction -> Boolean
-    playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
-
-
-
-
+-- monsterAction :: GameState -> GameState
+-- monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.values gs.mobs)
+--   where
+--     individualMonsterAction :: Mob -> GameState -> GameState
+--     individualMonsterAction mob gs' = let mobPos = position mob in
+--       case playerAdjacent mobPos of
+--         Just dir -> attackPlayer gs' mob
+--         Nothing -> let
+--             findEmptySpace :: Position -> Maybe Direction
+--             findEmptySpace = findAdjacent findEmptySpaceDirection
+--
+--             findEmptySpaceDirection :: Position -> Direction -> Boolean
+--             findEmptySpaceDirection pos dir = let targetPos = move dir gs'.atlas pos
+--               -- in not $ blocksMovement $ getElement targetPos gs.atlas
+--               in passable gs' targetPos
+--           in case findEmptySpace mobPos of
+--             Just moveDir ->
+--               let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
+--                   targetPos = move moveDir gs'.atlas mobPos
+--               in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
+--             Nothing -> gs'
+--
+--     playerAdjacent :: Position -> Maybe Direction
+--     playerAdjacent = findAdjacent playerAdjacentDirection
+--
+--     playerAdjacentDirection :: Position -> Direction -> Boolean
+--     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
 doMobStuff :: GameState -> GameState
 doMobStuff gs = flip execState gs $ (Map.keys gs.mobs) # traverse_ \mobPos -> do
-  maction <- liftMobState mobPos (individualMonsterAction2)
+  maction <- liftMobState mobPos (individualMonsterAction)
   case maction of
     Nothing -> pure unit
     Just action -> modify_ $ interpretMobAction action
-
 
 interpretMobAction :: MobAction -> GameState -> GameState
 interpretMobAction (MobAttack mob) gs = attackPlayer gs mob
@@ -234,8 +223,9 @@ monsterMovement gs p = map (\d -> move d gs.atlas p) [U,D,L,R]
   # head
 
 data MobAction = MobAttack Mob | MobPass Mob
-individualMonsterAction2 :: GameState -> State Mob MobAction
-individualMonsterAction2 gs = do
+
+individualMonsterAction :: GameState -> State Mob MobAction
+individualMonsterAction gs = do
   mob <- get
   let mobPos = position mob
   case playerAdjacent mobPos of
@@ -255,7 +245,6 @@ individualMonsterAction2 gs = do
 
     findEmptySpaceDirection :: Position -> Direction -> Boolean
     findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
-      -- in not $ blocksMovement $ getElement targetPos gs.atlas
       in passable gs targetPos
 
 

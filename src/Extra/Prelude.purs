@@ -39,8 +39,8 @@ import Control.Monad.State (State, get, put)
 import Control.Monad.Rec.Class (Step (..), tailRec)
 import Data.Array (groupBy, sortBy, zip, findIndex, deleteAt, index)
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Either (Either(..))
-import Data.Foldable 
+import Data.Either (Either(..), either)
+import Data.Foldable
  ( class Foldable
  , all
  , null
@@ -64,7 +64,7 @@ import Data.Set (Set)
 import Data.Set as S
 import Data.Traversable (class Traversable, traverse, traverse_, sequence_, sequence, for, for_)
 import Data.TraversableWithIndex (traverseWithIndex, forWithIndex)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Data.Unfoldable (unfoldr)
 import Debug.Trace (trace, spy)
 import Effect (Effect)

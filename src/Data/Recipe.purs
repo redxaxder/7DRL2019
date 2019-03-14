@@ -2,7 +2,7 @@ module Data.Recipe where
 
 import Extra.Prelude
 
-import Data.Array (sortBy)
+import Data.Array (sortBy, filter)
 import Data.Map (Map)
 import Data.Map as Map
 import Partial.Unsafe (unsafePartial)
@@ -10,8 +10,8 @@ import Partial.Unsafe (unsafePartial)
 import Data.Attribute (Attribute(..))
 import Data.Furniture (FurnitureType, stringToFurnitureType)
 import Data.Furniture as Furniture
-import Data.Item (ItemType, stringToItemType, hasAttribute)
-
+import Data.Item (stringToItemType, hasAttribute)
+import Types.Item (Item, ItemType, itemType)
 
 data CraftingMethod = Hand | ApplianceByName FurnitureType | ApplianceByAttribute Attribute -- maybe eventually...  | Tool Item
 
@@ -61,7 +61,7 @@ haveMats :: Map Char Item -> RecipeRecord -> Boolean
 haveMats inventory recipe =
   let containsItem :: Map Char Item -> ItemType -> Boolean
       containsItem inv it = not null $ filter selectItem (Map.toUnfoldable inventory)
-        where selectItem (Tuple char item) = item == mkItem it
+        where selectItem (Tuple char item) = itemType item == it
     in all (containsItem inventory) (mats recipe)
 
 canCraft :: Maybe FurnitureType -> RecipeRecord -> Boolean

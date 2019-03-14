@@ -9,10 +9,10 @@ import Data.Lens.Zoom (zoom)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Symbol (SProxy(..))
 
-import Data.Item (ItemType, orderable)
+import Data.Item (orderable)
 import Random (Gen)
 import Random.Gen (Random, chance, element, intRange, runRandom)
-import Types.Item (Item(..))
+import Types.Item (Item(..), ItemType)
 
 type Customer =
     { order     :: ItemType
