@@ -54,6 +54,16 @@ getRecipes items = sortBy (comparing \r -> distance items r.inputs) recipeRecord
 recipeCanUse :: RecipeRecord -> ItemType -> Boolean
 recipeCanUse {inputs} it = any (\input -> suitable input it) inputs
 
+mats :: RecipeRecord -> Array ItemType
+mats r = map (unsafePartial \x -> case x of Right a -> a) (filter (either (const false) (const true)) r.inputs)
+
+haveMats :: Map Char Item -> RecipeRecord -> Boolean
+haveMats inventory recipe =
+  let containsItem :: Map Char Item -> ItemType -> Boolean
+      containsItem inv it = not null $ filter selectItem (Map.toUnfoldable inventory)
+        where selectItem (Tuple char item) = item == mkItem it
+    in all (containsItem inventory) (mats recipe)
+
 canCraft :: Maybe FurnitureType -> RecipeRecord -> Boolean
 canCraft Nothing r = Map.member Hand r.methods
 canCraft (Just ft) r = isJust $ find (matchesMethod ft) (Map.keys r.methods)
@@ -92,4 +102,3 @@ recipeRecords = unsafePartial $
       [ name "cutting board" 0 ]
       "diced onion"
   ]
-

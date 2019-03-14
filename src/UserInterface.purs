@@ -96,6 +96,19 @@ craftingUIHints =
   , UIHint "Escape" "Back"
   ]
 
+-- Crafting
+--     (Array { label :: Char, item :: Item })
+--     (Array RecipeRecord)
+--     (Array UIHint)
+--     (Maybe FurnitureType)
+
+-- type RecipeRecord  =
+--   { inputs :: Array RecipeInput
+--   , output :: ItemType
+--   , methods :: Map CraftingMethod Int
+--   }
+
+
 crafting ::
   GameState ->
   Maybe FurnitureType ->
@@ -104,12 +117,17 @@ crafting ::
 crafting gs furniture selected = AwaitingInput { uiRender, next }
   where
     uiRender = Crafting selected shownRecipes craftingUIHints furniture
-    shownRecipes = getRecipes (Array.fromFoldable $ itemType <$> Map.values gs.inventory)
-       # filter (\r -> all (recipeCanUse r) (itemType <<< _.item <$> selected))
-       # filter (canCraft furniture)
+    shownRecipes = if null selected
+                     then mempty
+                     else getRecipes (Array.fromFoldable $ itemType <$> Map.values gs.inventory)
+                           # filter (\r -> all (recipeCanUse r) (itemType <<< _.item <$> selected))
+                           # filter (canCraft furniture)
     next "Escape" = main gs
     next "Enter" = main gs
-    next "Space" = main gs -- TODO: craft the item!
+    next "Space" = GameAction { uiAction: Craft $ Array.head shownRecipes, next: main } -- main gs -- TODO: craft the item!
+      -- case Array.head shownRecipes of
+      --                         Just a -> a.output
+      --                         Nothing ->
     next key = fromMaybe (crafting gs furniture selected) $ do
       label <- getCharacter key
       item <- Map.lookup label gs.inventory

@@ -139,4 +139,4 @@ canServe :: Item -> GameState -> Boolean
 canServe item@(Item { itemType }) { customerState: CustomerState cs } =
   isJust $ find (\c -> itemType == c.order) cs.customers
 
-data Action = Move Direction | Drop Char | Serve Char | Pass
+data Action = Move Direction | Drop Char | Serve Char | Craft (Maybe RecipeRecord) | Pass

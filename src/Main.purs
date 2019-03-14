@@ -123,6 +123,30 @@ handleAction gs (Serve itemChar) = flip evalState gs do
       liftInventoryState $ modify_ $ delete itemChar
       Just <$> get
 
+handleAction gs (Craft recipe) =
+  case recipe of
+    Nothing -> Just gs
+    Just rec ->
+    -- let
+      -- inputs = recipe.inputs -- Type Array RecipeInput
+      if haveMats gs.inventory rec then
+          let
+              deleteLeastByItemType :: ItemType -> Map.Map Char Item -> Map.Map Char Item
+              deleteLeastByItemType it inv = delete c inv
+                where
+                  c = fst $ (unsafePartial case (Array.head charItemArray) of Just a -> a) -- Crashes if you don't have the items to craft?!?!
+                  charItemArray :: Array (Tuple Char Item)
+                  charItemArray = filter selectItem (toUnfoldable inv)
+                  selectItem (Tuple char item) = item == mkItem it
+              inventory' = foldr deleteLeastByItemType gs.inventory (mats rec)
+              inventory'' = flip (flip Map.insert (mkItem rec.output)) inventory' <$> (getInventorySlot gs)
+            in case inventory'' of
+                  Nothing -> Nothing
+                  Just a -> Just (gs {inventory = a})
+        else Nothing
+      -- in Just gs {inventory = inventory}
+
+
 handleAction gs Pass = Just gs
 
 letters :: Set.Set Char
@@ -231,7 +255,8 @@ individualMonsterAction2 gs = do
 
     findEmptySpaceDirection :: Position -> Direction -> Boolean
     findEmptySpaceDirection pos dir = let targetPos = move dir gs.atlas pos
-      in not $ blocksMovement $ getElement targetPos gs.atlas
+      -- in not $ blocksMovement $ getElement targetPos gs.atlas
+      in passable gs targetPos
 
 
 customers :: GameState -> GameState

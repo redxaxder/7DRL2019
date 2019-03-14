@@ -58,6 +58,7 @@ draw ctx uiRenderData gs = do
 -- ruler for debugging
 -----------------------------------------------------------------
 
+drawRuler :: Context -> Effect Unit
 drawRuler ctx = drawLinesToGrid ctx white (V {x:0, y:0}) (map show $ enumFromTo 0 29)
 
 -----------------------------------------------------------------
@@ -172,8 +173,24 @@ drawServeCustomer ctx gs = drawTODO ctx
 drawCrafting
   :: Context -> GameState -> (Array { label :: Char, item :: Item })
   -> Array RecipeRecord -> Maybe FurnitureType -> Effect Unit
-drawCrafting ctx gs selectedItems recipes furniture = drawTODO ctx
+drawCrafting ctx gs selectedItems recipes furniture = do-- drawTODO ctx
+  let
+      getColor :: Tuple Char Item  -> Color
+      getColor (Tuple c i) = case head $ filter (\x -> x.label == c) selectedItems of
+                          Nothing -> gray
+                          Just a -> white
+  drawTextToGrid ctx white "Inventory" (V {x: 23, y: 1})
+  (toUnfoldable gs.inventory :: Array _) # traverseWithIndex_ \ix item -> do
+     drawTextToGrid ctx (getColor item) (itemString item) (V {x: 23, y: 4 + ix})
+  traverseWithIndex_ drawRecipe recipes
+  where
+  itemString  (Tuple c i) = (singleton c) <> ") " <> (itemName i)
+  drawRecipe :: Int -> RecipeRecord -> Effect Unit
+  drawRecipe ix recipe = do
+    drawTextToGrid ctx (getColor ix) (itemName $ mkItem recipe.output) (V {x: 43, y: 4 + ix})
+    where getColor i = case i of
+                      0 -> white
+                      _ -> gray
 
 drawTODO :: Context -> Effect Unit
 drawTODO ctx = drawLinesToGrid ctx white (V {x: 20, y: 15}) ["TODO"]
-
