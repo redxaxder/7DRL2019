@@ -126,19 +126,20 @@ handleAction gs (Serve itemChar) = flip evalState gs do
 
 handleAction gs (Craft recipe) =
   case recipe of
-    Nothing -> Just gs
+    Nothing -> Nothing
     Just rec ->
       if haveMats gs.inventory rec then -- Check that we have the mats to make this safe
           let
               deleteLeastByItemType :: ItemType -> Map.Map Char Item -> Map.Map Char Item
               deleteLeastByItemType it inv = delete c inv
                 where
-                  c = fst $ (unsafePartial fromJust $ Array.head charItemArray)
+                  c = fst $ unsafeFromJust $ Array.head charItemArray
                   charItemArray :: Array (Tuple Char Item)
-                  charItemArray = filter selectItem (Map.toUnfoldable inv)
-                  selectItem (Tuple char item) = itemType item == it
-              inventory' = foldr deleteLeastByItemType gs.inventory (mats rec)
-              inventory'' = flip (flip Map.insert (mkItem rec.output)) inventory' <$> (getInventorySlot gs)
+                  charItemArray = filter selectItem $ Map.toUnfoldable inv
+                  selectItem (char |> item) = itemType item == it
+              inventory' = foldr deleteLeastByItemType gs.inventory $ mats rec
+              insertAtKey k = Map.insert k (mkItem rec.output) inventory'
+              inventory'' = insertAtKey <$> getInventorySlot gs
             in case inventory'' of
                   Nothing -> Nothing
                   Just a -> Just (gs {inventory = a})
