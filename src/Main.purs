@@ -10,6 +10,7 @@ import Control.Monad.State
   , modify_
   , evalState
   )
+import Control.MonadZero (guard)
 import Data.Array (cons, filter)
 import Data.Array as Array
 import Data.Array.NonEmpty (cons', head, sortBy)
@@ -103,13 +104,13 @@ updateDistanceMap gs = gs { distanceMap = makeDistanceMap 10 gs.player gs.atlas 
 handleAction :: GameState -> Action -> Maybe GameState
 
 handleAction gs (Move dir) =
-  let player = move dir gs.atlas gs.player
+  let target = move dir gs.atlas gs.player
       atlas = gs.atlas
-   in case Map.lookup player gs.mobs of
-        Nothing -> if blocksMovement (getElement player atlas)
+   in case Map.lookup target gs.mobs of
+        Nothing -> if blocksMovement (getElement target atlas)
                       then Nothing
-                      else Just $ gs { player = player, atlas = atlas }
-        Just a -> Just $ doAttack gs player
+                      else Just $ gs { player = target, atlas = atlas }
+        Just a -> Just $ doAttack gs target
 
 handleAction gs (Drop itemChar) =
   let inventory = delete itemChar gs.inventory
@@ -124,27 +125,22 @@ handleAction gs (Serve itemChar) = flip evalState gs do
       liftInventoryState $ modify_ $ delete itemChar
       Just <$> get
 
-handleAction gs (Craft recipe) =
-  case recipe of
-    Nothing -> Nothing
-    Just rec ->
-      if haveMats gs.inventory rec then -- Check that we have the mats to make this safe
-          let
-              deleteLeastByItemType :: ItemType -> Map.Map Char Item -> Map.Map Char Item
-              deleteLeastByItemType it inv = delete c inv
-                where
-                  c = fst $ unsafeFromJust $ Array.head charItemArray
-                  charItemArray :: Array (Tuple Char Item)
-                  charItemArray = filter selectItem $ Map.toUnfoldable inv
-                  selectItem (char |> item) = itemType item == it
-              inventory' = foldr deleteLeastByItemType gs.inventory $ mats rec
-              insertAtKey k = Map.insert k (mkItem rec.output) inventory'
-              inventory'' = insertAtKey <$> getInventorySlot gs
-            in case inventory'' of
-                  Nothing -> Nothing
-                  Just a -> Just (gs {inventory = a})
-        else Nothing
-
+handleAction gs (Craft maybeRecipe) = do
+  recipe <- maybeRecipe
+  guard $ haveMats gs.inventory recipe -- Make sure deleting is safe
+  Just $ gs { items     = Map.insert gs.player (mkItem recipe.output) gs.items
+            , inventory = foldl deleteFromInv gs.inventory $ mats recipe
+            }
+    where
+      deleteFromInv :: Map.Map Char Item -> ItemType -> Map.Map Char Item
+      deleteFromInv inventory itemT = delete itemChar inventory
+        where
+          itemChar = unsafeFromJust $ Array.head $ itemChars itemT
+          itemChars :: ItemType -> Array Char
+          itemChars itemT' = Map.toUnfoldable inventory
+                           # filter (byItemT itemT')
+                           # map fst
+          byItemT targetItemT (char |> item) = itemType item == targetItemT
 
 handleAction gs Pass = Just gs
 
@@ -175,34 +171,6 @@ passable :: GameState -> Position -> Boolean
 passable gs pos = not ((blocksMovement $ getElement pos gs.atlas)
                     || (pos == gs.player)
                     || (isJust $ lookup pos gs.mobs))
-
--- monsterAction :: GameState -> GameState
--- monsterAction gs = foldr individualMonsterAction gs (Array.fromFoldable $ Map.values gs.mobs)
---   where
---     individualMonsterAction :: Mob -> GameState -> GameState
---     individualMonsterAction mob gs' = let mobPos = position mob in
---       case playerAdjacent mobPos of
---         Just dir -> attackPlayer gs' mob
---         Nothing -> let
---             findEmptySpace :: Position -> Maybe Direction
---             findEmptySpace = findAdjacent findEmptySpaceDirection
---
---             findEmptySpaceDirection :: Position -> Direction -> Boolean
---             findEmptySpaceDirection pos dir = let targetPos = move dir gs'.atlas pos
---               -- in not $ blocksMovement $ getElement targetPos gs.atlas
---               in passable gs' targetPos
---           in case findEmptySpace mobPos of
---             Just moveDir ->
---               let gs'' = gs' { mobs = Map.delete mobPos gs'.mobs }
---                   targetPos = move moveDir gs'.atlas mobPos
---               in gs'' { mobs = Map.insert targetPos mob gs''.mobs }
---             Nothing -> gs'
---
---     playerAdjacent :: Position -> Maybe Direction
---     playerAdjacent = findAdjacent playerAdjacentDirection
---
---     playerAdjacentDirection :: Position -> Direction -> Boolean
---     playerAdjacentDirection pos dir = (move dir gs.atlas pos) == gs.player
 
 doMobStuff :: GameState -> GameState
 doMobStuff gs = flip execState gs $ (Map.keys gs.mobs) # traverse_ \mobPos -> do
